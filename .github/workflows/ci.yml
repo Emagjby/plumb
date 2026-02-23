@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main, feat/*]
+  pull_request:
+    branches: [master, main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        working-directory: plumb
+        run: cargo build --verbose
+
+      - name: Run tests
+        working-directory: plumb
+        run: cargo test --verbose
