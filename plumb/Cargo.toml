@@ -1,0 +1,18 @@
+[package]
+name = "plumb"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+atomicwrites = "0.4.4"
+clap = { version = "4.5.60", features = ["derive"] }
+rand = "0.10.0"
+strata-rs = "0.4.3"
+thiserror = "2.0.18"
+time = "0.3.47"
+
+[dev-dependencies]
+assert_cmd = "2.1.2"
+predicates = "3.1.4"
+tempfile = "3.25.0"
