@@ -4,7 +4,7 @@ Begin a new refactor session.
 
 ## Synopsis
 
-```
+```bash
 plumb start [name]
 ```
 

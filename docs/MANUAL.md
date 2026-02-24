@@ -66,6 +66,7 @@ See a complete walkthrough: [Typical flow](./examples/typical-flow.md).
 | ------------------------------------ | ------------------------------------------------------------- |
 | [plumb start](./commands/start.md)   | Begin a new session.                                          |
 | [plumb add](./commands/add.md)       | Enqueue files (or a folder) as todo items.                    |
+| [plumb rm](./commands/rm.md)         | Remove an item from the queue.                                |
 | [plumb status](./commands/status.md) | Show session progress and the current in-progress item.       |
 | [plumb go](./commands/go.md)         | Start working on a specific item; captures baseline snapshot and opens vim. |
 | [plumb diff](./commands/diff.md)     | Diff current file contents against the go-time baseline.      |
@@ -80,6 +81,7 @@ See a complete walkthrough: [Typical flow](./examples/typical-flow.md).
 
 - **`plumb start [name]`** -- Creates a new session and marks it active. Initialises `.plumb/` if it does not exist.
 - **`plumb add <file>` / `plumb add -f <folder>`** -- Adds one file, or all files inside a folder recursively, as `todo` items in the active session.
+- **`plumb rm <id|file>`** -- Removes an item from the session queue. Cannot remove an `in_progress` item.
 - **`plumb status`** -- Prints counts of todo / in-progress / done items and the currently in-progress file, if any.
 - **`plumb go <id|file>`** -- Sets one `todo` item to `in_progress`, captures a baseline snapshot of that file's current contents, and opens the file in vim.
 - **`plumb diff [id|file]`** -- Shows the unified diff between the file's current contents on disk and its go-time baseline snapshot.

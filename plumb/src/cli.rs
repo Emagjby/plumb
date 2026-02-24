@@ -1,6 +1,9 @@
 use clap::{Parser, Subcommand};
 
-use crate::{commands::start::plumb_start, error::PlumbError};
+use crate::{
+    commands::{add::plumb_add, start::plumb_start, status::plumb_status},
+    error::PlumbError,
+};
 
 #[derive(Parser)]
 #[command(
@@ -25,6 +28,18 @@ pub enum Commands {
         #[arg(verbatim_doc_comment)]
         name: Option<String>,
     },
+
+    /// Add a file (or a folder with -f --folder) to the current session's queue.
+    Add {
+        // TODO: ADD FOLDER LATER
+        /// Path to the file to add.
+        /// Example: "src/auth/guards.rs"
+        #[arg(verbatim_doc_comment)]
+        file: String,
+    },
+
+    /// Prints the current session's queue of files to be refactored.
+    Status {},
 }
 
 pub fn run() -> Result<(), PlumbError> {
@@ -32,6 +47,8 @@ pub fn run() -> Result<(), PlumbError> {
 
     match cli.command {
         Commands::Start { name } => plumb_start(name)?,
+        Commands::Add { file } => plumb_add(file)?,
+        Commands::Status {} => plumb_status()?,
     }
 
     Ok(())

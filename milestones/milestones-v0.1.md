@@ -102,6 +102,56 @@ You can enqueue files as items in `todo`, persisted in `items.scb` with stable I
 
 ---
 
+## Phase 0.1.1.2 — `rm` (remove item from queue)
+
+### Outcome
+
+You can remove items from the session queue by ID or file path, keeping the queue clean without restarting.
+
+### Scope
+
+- `plumb rm <id|file>`:
+  - resolve item by integer ID or workspace-relative file path
+  - normalize file path input the same way as `add` (relative to workspace root)
+  - refuse to remove an `in_progress` item (must `done` or `restore` first)
+  - allow removing `todo` and `done` items
+  - delete baseline snapshot if one exists for the removed item
+  - IDs are stable: removing an item does not renumber other items
+  - persist updated item list to `items.scb`
+
+### Done when
+
+- `plumb rm 2` removes item 2 from the queue and prints confirmation
+- `plumb rm src/auth/guard.rs` resolves path and removes the matching item
+- Removing an `in_progress` item fails with a clear error
+- Removing a non-existent ID or path fails with a clear error
+- IDs of remaining items are unchanged after removal
+- Baseline snapshot is cleaned up when a `done` item is removed
+- `plumb status` no longer shows the removed item
+
+### Tests
+
+**Unit**
+
+- removal by ID: item removed, others unchanged
+- removal by path: path normalization + match
+- refusal of in_progress removal
+- ID stability after removal (no renumbering)
+- error on non-existent ID / path
+
+**Integration**
+
+- temp dir workspace:
+  - add 3 items, remove middle one, assert remaining items correct
+  - add item, go, done, remove done item, assert baseline snapshot deleted
+  - attempt to remove in_progress item, assert error
+
+**Regression**
+
+- none required yet
+
+---
+
 ## Phase 0.1.2 — `add -f` folder expansion (recursive + deterministic)
 
 ### Outcome

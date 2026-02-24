@@ -4,7 +4,7 @@ Add files to the active session as `todo` items.
 
 ## Synopsis
 
-```
+```bash
 plumb add <file>
 plumb add -f <folder>
 ```

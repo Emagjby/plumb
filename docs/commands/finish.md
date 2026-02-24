@@ -4,7 +4,7 @@ Close the active session.
 
 ## Synopsis
 
-```
+```bash
 plumb finish
 ```
 
