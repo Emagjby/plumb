@@ -3,8 +3,13 @@ use std::path::Path;
 use thiserror::Error;
 
 use crate::{
+<<<<<<< HEAD
     fs::{normalize_rel_path, InputError},
     store::items::{active_session_id, load_items, save_items, Item, State, StoreError},
+=======
+    fs::{InputError, normalize_rel_path},
+    store::items::{Item, State, StoreError, active_session_id, load_items, save_items},
+>>>>>>> f501775 (feat(items): add items.scb store + plumb add & plumb status)
     workspace::resolve_workspace_root,
 };
 
@@ -26,11 +31,18 @@ pub fn plumb_add(file: String) -> Result<(), AddError> {
     let cwd = &std::env::current_dir().map_err(|e| AddError::UnknownError(e.to_string()))?;
     let root = resolve_workspace_root(cwd).map_err(|e| AddError::UnknownError(e.to_string()))?;
 
+<<<<<<< HEAD
+    let session_id = active_session_id(&root).map_err(|_| {
+        AddError::NoActiveSession(
+            "no active session found, use `plumb start` to start a session".to_string(),
+        )
+=======
     let session_id = active_session_id(&root).map_err(|e| match e {
         StoreError::NoActiveSession => AddError::NoActiveSession(
             "no active session found, please start a session first".to_string(),
         ),
         _ => AddError::StoreError(e),
+>>>>>>> f501775 (feat(items): add items.scb store + plumb add & plumb status)
     })?;
     let normalized_path = normalize_rel_path(&root, Path::new(&file))?;
 

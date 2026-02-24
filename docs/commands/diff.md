@@ -4,7 +4,7 @@ Show changes since the go-time baseline.
 
 ## Synopsis
 
-```
+```bash
 plumb diff [id|file]
 ```
 
@@ -18,9 +18,9 @@ By default (no arguments), it diffs the currently `in_progress` item.
 
 ## Arguments
 
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `id` or `file` | No | The item to diff. Defaults to the current `in_progress` item. Accepts an integer ID or a file path relative to the workspace root. |
+| Argument       | Required | Description                                                                                                                        |
+| -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `id` or `file` | No       | The item to diff. Defaults to the current `in_progress` item. Accepts an integer ID or a file path relative to the workspace root. |
 
 ## Options
 
@@ -64,13 +64,13 @@ plumb diff src/auth/session.rs
 
 ## Failure cases
 
-| Scenario | Behavior |
-|----------|----------|
-| No argument and no item `in_progress` | Error: no in-progress item to diff. |
-| Specified item is `todo` (no baseline exists) | Error: no baseline snapshot. Run `plumb go` first. |
-| Baseline snapshot file is missing on disk | Error: baseline not found. This should not occur in normal use. |
-| File deleted after go-time | Diff shows all lines removed (file treated as empty). |
-| File unchanged since go-time | Empty diff (no output). |
+| Scenario                                      | Behavior                                                        |
+| --------------------------------------------- | --------------------------------------------------------------- |
+| No argument and no item `in_progress`         | Error: no in-progress item to diff.                             |
+| Specified item is `todo` (no baseline exists) | Error: no baseline snapshot. Run `plumb go` first.              |
+| Baseline snapshot file is missing on disk     | Error: baseline not found. This should not occur in normal use. |
+| File deleted after go-time                    | Diff shows all lines removed (file treated as empty).           |
+| File unchanged since go-time                  | Empty diff (no output).                                         |
 
 ## Notes
 

@@ -4,7 +4,11 @@ Remove an item from the active session's queue.
 
 ## Synopsis
 
+<<<<<<< HEAD
+```
+=======
 ```bash
+>>>>>>> f501775 (feat(items): add items.scb store + plumb add & plumb status)
 plumb rm <id|file>
 ```
 

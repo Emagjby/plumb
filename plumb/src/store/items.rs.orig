@@ -106,9 +106,13 @@ pub fn load_items(root: &Path) -> Result<Vec<Item>, StoreError> {
             };
 
             let id = match map.get("id") {
+<<<<<<< HEAD
+                Some(Value::Int(s)) => *s,
+=======
                 Some(Value::Int(i)) => usize::try_from(*i).map_err(|e| {
                     StoreError::ReadError(format!("Invalid 'id' value (not a valid usize): {e}"))
                 })?,
+>>>>>>> f501775 (feat(items): add items.scb store + plumb add & plumb status)
                 _ => {
                     return Err(StoreError::ReadError(
                         "Missing or invalid 'id' field".to_string(),

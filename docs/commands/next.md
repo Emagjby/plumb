@@ -4,7 +4,7 @@ Print the next todo item.
 
 ## Synopsis
 
-```
+```bash
 plumb next
 ```
 

@@ -4,7 +4,7 @@ Mark the in-progress item as done.
 
 ## Synopsis
 
-```
+```bash
 plumb done [id|file]
 ```
 
@@ -16,9 +16,9 @@ explicitly by ID or file path.
 
 ## Arguments
 
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `id` or `file` | No | The item to mark done. Defaults to the current `in_progress` item. Accepts an integer ID or a file path relative to the workspace root. |
+| Argument       | Required | Description                                                                                                                             |
+| -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `id` or `file` | No       | The item to mark done. Defaults to the current `in_progress` item. Accepts an integer ID or a file path relative to the workspace root. |
 
 ## Options
 

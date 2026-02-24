@@ -4,7 +4,7 @@ Restore a file to its baseline snapshot.
 
 ## Synopsis
 
-```
+```bash
 plumb restore [id|file]
 ```
 
@@ -21,9 +21,9 @@ By default (no arguments), it restores the currently `in_progress` item.
 
 ## Arguments
 
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `id` or `file` | No | The item to restore. Defaults to the current `in_progress` item. Accepts an integer ID or a file path relative to the workspace root. |
+| Argument       | Required | Description                                                                                                                           |
+| -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `id` or `file` | No       | The item to restore. Defaults to the current `in_progress` item. Accepts an integer ID or a file path relative to the workspace root. |
 
 ## Options
 
@@ -94,12 +94,12 @@ plumb restore
 
 ## Failure cases
 
-| Scenario | Behavior |
-|----------|----------|
-| No argument and no item `in_progress` | Error: no in-progress item to restore. |
-| Item is `todo` (no baseline exists) | Error: no baseline snapshot. Run `plumb go` first. |
+| Scenario                                  | Behavior                                                        |
+| ----------------------------------------- | --------------------------------------------------------------- |
+| No argument and no item `in_progress`     | Error: no in-progress item to restore.                          |
+| Item is `todo` (no baseline exists)       | Error: no baseline snapshot. Run `plumb go` first.              |
 | Baseline snapshot file is missing on disk | Error: baseline not found. This should not occur in normal use. |
-| File path is not writable (permissions) | Error: cannot write to file. Baseline is not modified. |
+| File path is not writable (permissions)   | Error: cannot write to file. Baseline is not modified.          |
 
 ## Notes
 

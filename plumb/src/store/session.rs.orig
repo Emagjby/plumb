@@ -2,7 +2,11 @@ use std::path::Path;
 
 use strata::{decode::decode, value::Value};
 
+<<<<<<< HEAD
 use super::items::{session_dir, StoreError};
+=======
+use super::items::{StoreError, session_dir};
+>>>>>>> f501775 (feat(items): add items.scb store + plumb add & plumb status)
 
 #[derive(Debug, Clone)]
 pub struct Session {
@@ -43,7 +47,10 @@ pub fn load_session(root: &Path, session_id: &str) -> Result<Session, StoreError
 
     let name = match map.get("name") {
         Some(Value::String(s)) => s.clone(),
+<<<<<<< HEAD
+=======
         None => String::new(),
+>>>>>>> f501775 (feat(items): add items.scb store + plumb add & plumb status)
         _ => {
             return Err(StoreError::ReadError(
                 "session.scb: missing or invalid 'name' field".to_string(),

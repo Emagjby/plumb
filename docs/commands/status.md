@@ -4,7 +4,7 @@ Show the state of the active session.
 
 ## Synopsis
 
-```
+```bash
 plumb status
 ```
 

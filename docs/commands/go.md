@@ -4,7 +4,7 @@ Start working on an item. Captures the baseline snapshot and opens the file in v
 
 ## Synopsis
 
-```
+```bash
 plumb go <id|file>
 ```
 
@@ -21,9 +21,9 @@ via `plumb diff` when you exit.
 
 ## Arguments
 
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `id` or `file` | Yes | The item to start. Accepts either the integer ID or the file path (relative to workspace root). |
+| Argument       | Required | Description                                                                                     |
+| -------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `id` or `file` | Yes      | The item to start. Accepts either the integer ID or the file path (relative to workspace root). |
 
 ## Options
 
