@@ -3,8 +3,8 @@ use std::path::Path;
 use thiserror::Error;
 
 use crate::{
-    fs::{normalize_rel_path, InputError},
-    store::items::{active_session_id, load_items, save_items, Item, State, StoreError},
+    fs::{InputError, normalize_rel_path},
+    store::items::{Item, State, StoreError, active_session_id, load_items, save_items},
     workspace::resolve_workspace_root,
 };
 
