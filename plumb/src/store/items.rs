@@ -1,14 +1,13 @@
 use std::path::{Path, PathBuf};
 
-use atomicwrites::{AtomicFile, OverwriteBehavior};
-use strata::{decode::decode, encode::encode, map, string, value::Value};
+use strata::{decode::decode, encode::encode, int, map, string, value::Value};
 use thiserror::Error;
 
-use crate::workspace::resolve_workspace_root;
+use crate::{fs::atomic_write, workspace::resolve_workspace_root};
 
 #[derive(Debug, Error)]
 pub enum StoreError {
-    #[error("Failed to read the session file\n\n{0}")]
+    #[error("Failed to read the active file\n\n{0}")]
     ReadError(String),
     #[error("Failed to write the session file\n\n{0}")]
     WriteError(String),
@@ -26,7 +25,7 @@ pub enum State {
 }
 
 pub struct Item {
-    pub id: String,
+    pub id: usize,
     pub rel_path: String,
     pub state: State,
 }
@@ -35,10 +34,10 @@ pub fn active_session_id(root: &Path) -> Result<String, StoreError> {
     let workspace_root = resolve_workspace_root(root).map_err(|e| {
         StoreError::ResolveWorkspaceRootError(format!("Could not resolve workspace root: {e}"))
     })?;
-    let session_file = workspace_root.join(".plumb").join("session");
+    let session_file = workspace_root.join(".plumb").join("active");
 
     let content = std::fs::read_to_string(&session_file)
-        .map_err(|e| StoreError::ReadError(format!("Could not read session file: {e}")))?;
+        .map_err(|e| StoreError::ReadError(format!("Could not read active file: {e}")))?;
 
     let session_id = content.trim().to_string();
     if session_id.is_empty() {
@@ -108,7 +107,7 @@ pub fn load_items(root: &Path) -> Result<Vec<Item>, StoreError> {
             };
 
             let id = match map.get("id") {
-                Some(Value::String(s)) => s.clone(),
+                Some(Value::Int(s)) => *s,
                 _ => {
                     return Err(StoreError::ReadError(
                         "Missing or invalid 'id' field".to_string(),
@@ -140,7 +139,7 @@ pub fn load_items(root: &Path) -> Result<Vec<Item>, StoreError> {
             };
 
             Ok(Item {
-                id,
+                id: id as usize,
                 rel_path,
                 state,
             })
@@ -168,7 +167,7 @@ pub fn save_items(root: &Path, session_id: &str, items: &[Item]) -> Result<(), S
                     State::Done => "done",
                 };
                 map! {
-                    "id" => string!(&item.id),
+                    "id" => int!(item.id as i64),
                     "rel_path" => string!(&item.rel_path),
                     "state" => string!(state_str)
                 }
@@ -179,8 +178,7 @@ pub fn save_items(root: &Path, session_id: &str, items: &[Item]) -> Result<(), S
     let scb = encode(&items_value)
         .map_err(|e| StoreError::WriteError(format!("Failed to encode items: {:?}", e)))?;
 
-    let af = AtomicFile::new(&items_file, OverwriteBehavior::AllowOverwrite);
-    af.write(|f| std::io::Write::write_all(&mut std::io::BufWriter::new(f), &scb))
+    atomic_write(&items_file, &scb)
         .map_err(|e| StoreError::WriteError(format!("Failed to atomically write items: {}", e)))?;
 
     Ok(())
@@ -196,7 +194,7 @@ mod tests {
         let workspace = tempfile::tempdir_in(tmp.path()).unwrap();
         let plumb_dir = workspace.path().join(".plumb");
         fs::create_dir_all(&plumb_dir).unwrap();
-        fs::write(plumb_dir.join("session"), session_id).unwrap();
+        fs::write(plumb_dir.join("active"), session_id).unwrap();
         workspace
     }
 
@@ -225,7 +223,7 @@ mod tests {
         let workspace = tempfile::tempdir_in(tmp.path()).unwrap();
         let plumb_dir = workspace.path().join(".plumb");
         fs::create_dir_all(&plumb_dir).unwrap();
-        fs::write(plumb_dir.join("session"), "").unwrap();
+        fs::write(plumb_dir.join("active"), "").unwrap();
 
         let result = active_session_id(workspace.path());
         assert!(matches!(result.unwrap_err(), StoreError::NoActiveSession));
@@ -247,17 +245,17 @@ mod tests {
 
         let items_value = Value::List(vec![
             map! {
-                "id" => string!("1"),
+                "id" => int!(1_i64),
                 "rel_path" => string!("src/main.rs"),
                 "state" => string!("todo")
             },
             map! {
-                "id" => string!("2"),
+                "id" => int!(2_i64),
                 "rel_path" => string!("src/lib.rs"),
                 "state" => string!("in_progress")
             },
             map! {
-                "id" => string!("3"),
+                "id" => int!(3_i64),
                 "rel_path" => string!("README.md"),
                 "state" => string!("done")
             },
@@ -269,15 +267,15 @@ mod tests {
 
         assert_eq!(result.len(), 3);
 
-        assert_eq!(result[0].id, "1");
+        assert_eq!(result[0].id, 1);
         assert_eq!(result[0].rel_path, "src/main.rs");
         assert_eq!(result[0].state, State::Todo);
 
-        assert_eq!(result[1].id, "2");
+        assert_eq!(result[1].id, 2);
         assert_eq!(result[1].rel_path, "src/lib.rs");
         assert_eq!(result[1].state, State::InProgress);
 
-        assert_eq!(result[2].id, "3");
+        assert_eq!(result[2].id, 3);
         assert_eq!(result[2].rel_path, "README.md");
         assert_eq!(result[2].state, State::Done);
     }
@@ -305,7 +303,7 @@ mod tests {
         let workspace = create_workspace_with_session(&tmp, "test-session");
 
         let items = vec![Item {
-            id: "1".to_string(),
+            id: 1,
             rel_path: "src/main.rs".to_string(),
             state: State::Todo,
         }];
@@ -321,7 +319,7 @@ mod tests {
 
         let loaded = load_items(workspace.path()).unwrap();
         assert_eq!(loaded.len(), 1);
-        assert_eq!(loaded[0].id, "1");
+        assert_eq!(loaded[0].id, 1);
         assert_eq!(loaded[0].rel_path, "src/main.rs");
         assert_eq!(loaded[0].state, State::Todo);
     }
@@ -333,17 +331,17 @@ mod tests {
 
         let items = vec![
             Item {
-                id: "1".to_string(),
+                id: 1,
                 rel_path: "src/main.rs".to_string(),
                 state: State::Todo,
             },
             Item {
-                id: "2".to_string(),
+                id: 2,
                 rel_path: "src/lib.rs".to_string(),
                 state: State::InProgress,
             },
             Item {
-                id: "3".to_string(),
+                id: 3,
                 rel_path: "README.md".to_string(),
                 state: State::Done,
             },
@@ -354,11 +352,11 @@ mod tests {
         let loaded = load_items(workspace.path()).unwrap();
         assert_eq!(loaded.len(), 3);
 
-        assert_eq!(loaded[0].id, "1");
+        assert_eq!(loaded[0].id, 1);
         assert_eq!(loaded[0].state, State::Todo);
-        assert_eq!(loaded[1].id, "2");
+        assert_eq!(loaded[1].id, 2);
         assert_eq!(loaded[1].state, State::InProgress);
-        assert_eq!(loaded[2].id, "3");
+        assert_eq!(loaded[2].id, 3);
         assert_eq!(loaded[2].state, State::Done);
     }
 
@@ -386,14 +384,14 @@ mod tests {
         let workspace = create_workspace_with_session(&tmp, "test-session");
 
         let items1 = vec![Item {
-            id: "old".to_string(),
+            id: 1,
             rel_path: "old.rs".to_string(),
             state: State::Todo,
         }];
         save_items(workspace.path(), "test-session", &items1).unwrap();
 
         let items2 = vec![Item {
-            id: "new".to_string(),
+            id: 2,
             rel_path: "new.rs".to_string(),
             state: State::Done,
         }];
@@ -401,7 +399,7 @@ mod tests {
 
         let loaded = load_items(workspace.path()).unwrap();
         assert_eq!(loaded.len(), 1);
-        assert_eq!(loaded[0].id, "new");
+        assert_eq!(loaded[0].id, 2);
         assert_eq!(loaded[0].state, State::Done);
     }
 }

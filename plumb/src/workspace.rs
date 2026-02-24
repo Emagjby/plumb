@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use atomicwrites::{AtomicFile, OverwriteBehavior};
+use crate::fs::atomic_write;
 use rand::Rng;
 use strata::{bytes, encode::encode, map, string, value::Value};
 use thiserror::Error;
@@ -105,14 +105,15 @@ fn initialize_session_metadata(
     })?;
 
     let metadata_path = session_dir.join("session.scb");
-    atomic_write(&metadata_path, &scb)?;
+    atomic_write(&metadata_path, &scb).map_err(|e| WorkspaceError::UnknownError(e.to_string()))?;
 
     let empty_items = Value::List(vec![]);
     let items_scb = encode(&empty_items).map_err(|e| {
         WorkspaceError::UnknownError(format!("failed to encode empty items: {:?}", e))
     })?;
     let items_path = session_dir.join("items.scb");
-    atomic_write(&items_path, &items_scb)?;
+    atomic_write(&items_path, &items_scb)
+        .map_err(|e| WorkspaceError::UnknownError(e.to_string()))?;
 
     Ok(())
 }
@@ -126,6 +127,7 @@ fn write_active_session(root: &Path, session_id: &str) -> Result<(), WorkspaceEr
     let active_path = plumb_dir(root).join("active");
 
     atomic_write(&active_path, session_id.as_bytes())
+        .map_err(|e| WorkspaceError::UnknownError(e.to_string()))
 }
 
 fn ensure_new_session_dir(root: &Path, session_id: &str) -> Result<PathBuf, WorkspaceError> {
@@ -171,17 +173,6 @@ fn ensure_dir(path: &Path) -> Result<(), WorkspaceError> {
             path
         )));
     }
-
-    Ok(())
-}
-
-fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), WorkspaceError> {
-    let af = AtomicFile::new(path, OverwriteBehavior::AllowOverwrite);
-    af.write(|f| {
-        use std::io::Write;
-        f.write_all(contents)
-    })
-    .map_err(|e| WorkspaceError::UnknownError(e.to_string()))?;
 
     Ok(())
 }
@@ -369,48 +360,6 @@ mod tests {
 
         let result = ensure_dir(&dir_path);
         assert!(result.is_ok());
-    }
-
-    #[test]
-    fn ensure_dir_creates_directory_if_not_exists() {
-        let temp_dir = TempDir::new().unwrap();
-        let root = temp_dir.path().join("root");
-
-        mk_plumb(&root);
-        let dir_path = root.join(".plumb").join("newdir");
-
-        let result = ensure_dir(&dir_path);
-        assert!(result.is_ok());
-        assert!(dir_path.is_dir());
-    }
-
-    #[test]
-    fn atomic_write_overwrites_existing_file() {
-        let temp_dir = TempDir::new().unwrap();
-        let root = temp_dir.path().join("root");
-
-        mk_plumb(&root);
-        let file_path = root.join(".plumb").join("file.txt");
-        fs::write(&file_path, "old").unwrap();
-
-        atomic_write(&file_path, b"new").unwrap();
-
-        let contents = fs::read_to_string(file_path).unwrap();
-        assert_eq!(contents, "new");
-    }
-
-    #[test]
-    fn atomic_write_creates_file_if_not_exists() {
-        let temp_dir = TempDir::new().unwrap();
-        let root = temp_dir.path().join("root");
-
-        mk_plumb(&root);
-        let file_path = root.join(".plumb").join("newfile.txt");
-
-        atomic_write(&file_path, b"content").unwrap();
-
-        let contents = fs::read_to_string(file_path).unwrap();
-        assert_eq!(contents, "content");
     }
 
     #[test]

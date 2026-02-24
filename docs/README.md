@@ -24,6 +24,7 @@ This folder contains the specification and user manual for **Plumb** v0.1.
 | -------------- | ------------------------------ |
 | `plumb start`  | [start](./commands/start.md)   |
 | `plumb add`    | [add](./commands/add.md)       |
+| `plumb rm`     | [rm](./commands/rm.md)         |
 | `plumb status` | [status](./commands/status.md) |
 | `plumb go`     | [go](./commands/go.md)         |
 | `plumb diff`   | [diff](./commands/diff.md)     |

@@ -1,6 +1,9 @@
 use clap::{Parser, Subcommand};
 
-use crate::{commands::start::plumb_start, error::PlumbError};
+use crate::{
+    commands::{add::plumb_add, start::plumb_start, status::plumb_status},
+    error::PlumbError,
+};
 
 #[derive(Parser)]
 #[command(
@@ -44,12 +47,8 @@ pub fn run() -> Result<(), PlumbError> {
 
     match cli.command {
         Commands::Start { name } => plumb_start(name)?,
-        Commands::Add { file } => {
-            println!("Adding file: {}", file);
-        }
-        Commands::Status {} => {
-            println!("Current session status: ...");
-        }
+        Commands::Add { file } => plumb_add(file)?,
+        Commands::Status {} => plumb_status()?,
     }
 
     Ok(())
