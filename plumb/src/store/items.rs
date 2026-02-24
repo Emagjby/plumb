@@ -24,6 +24,7 @@ pub enum State {
     Done,
 }
 
+#[derive(Debug, Clone)]
 pub struct Item {
     pub id: usize,
     pub rel_path: String,
@@ -140,7 +141,7 @@ pub fn load_items(root: &Path) -> Result<Vec<Item>, StoreError> {
             };
 
             Ok(Item {
-                id: id as usize,
+                id,
                 rel_path,
                 state,
             })

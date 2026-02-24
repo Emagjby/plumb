@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 use crate::{
-    commands::{add::AddError, start::PlumbStartError, status::StatusError},
+    commands::{add::AddError, rm::RmError, start::PlumbStartError, status::StatusError},
     fs::InputError,
     store::items::StoreError,
     workspace::WorkspaceError,
@@ -9,6 +9,8 @@ use crate::{
 
 #[derive(Error, Debug)]
 pub enum PlumbError {
+    #[error("rm error: {0}")]
+    RmError(#[from] RmError),
     #[error("status error: {0}")]
     StatusError(#[from] StatusError),
     #[error("add error: {0}")]

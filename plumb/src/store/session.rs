@@ -2,7 +2,7 @@ use std::path::Path;
 
 use strata::{decode::decode, value::Value};
 
-use super::items::{session_dir, StoreError};
+use super::items::{StoreError, session_dir};
 
 #[derive(Debug, Clone)]
 pub struct Session {
