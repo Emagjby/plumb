@@ -56,6 +56,7 @@ core functionality.
 | File is unreadable (permissions) | `plumb go` fails with an error. The item stays `todo`. |
 | Baseline missing when running `plumb diff` | `plumb diff` fails with an error. This should not happen in normal use. |
 | File deleted after go-time | `plumb diff` reports the file as deleted (all lines removed). |
+| Baseline/current is non-UTF-8 bytes | `plumb diff` prints `Binary files differ: <path>`. |
 
 ## See also
 

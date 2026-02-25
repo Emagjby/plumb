@@ -7,6 +7,7 @@ edition = "2024"
 anyhow = "1.0.102"
 atomicwrites = "0.4.4"
 clap = { version = "4.5.60", features = ["derive"] }
+imara-diff = "0.1"
 rand = "0.10.0"
 strata-rs = "0.4.3"
 thiserror = "2.0.18"

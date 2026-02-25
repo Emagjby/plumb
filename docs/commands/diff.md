@@ -14,13 +14,16 @@ Produces a unified diff between the **baseline snapshot** (captured at
 `plumb go` time) and the file's **current contents on disk**. This shows
 exactly what you changed during your refactoring pass.
 
-By default (no arguments), it diffs the currently `in_progress` item.
+If you provide a target (`id` or `file`), Plumb diffs that specific item.
+
+If you omit the target, Plumb diffs **all items currently in `in_progress`**.
+If none are `in_progress`, the command succeeds and prints nothing.
 
 ## Arguments
 
 | Argument       | Required | Description                                                                                                                        |
 | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `id` or `file` | No       | The item to diff. Defaults to the current `in_progress` item. Accepts an integer ID or a file path relative to the workspace root. |
+| `id` or `file` | No       | The item to diff. If omitted, Plumb diffs all `in_progress` items. Accepts an integer ID or a file path relative to the workspace root. |
 
 ## Options
 
@@ -37,17 +40,17 @@ merge, and no git involvement.
 
 ## Examples
 
-Diff the current in-progress item (most common):
+Diff all currently in-progress items:
 
 ```bash
 plumb diff
 # --- baseline: src/auth/guard.rs
 # +++ current:  src/auth/guard.rs
 # @@ -10,7 +10,7 @@
-#  fn check_auth(req: &Request) -> bool {
-# -    req.headers.contains("Authorization")
-# +    req.headers.get("Authorization").is_some_and(|v| !v.is_empty())
-#  }
+# ...
+# --- baseline: src/auth/session.rs
+# +++ current:  src/auth/session.rs
+# ...
 ```
 
 Diff a specific item by ID:
@@ -66,10 +69,11 @@ plumb diff src/auth/session.rs
 
 | Scenario                                      | Behavior                                                        |
 | --------------------------------------------- | --------------------------------------------------------------- |
-| No argument and no item `in_progress`         | Error: no in-progress item to diff.                             |
+| No argument and no item `in_progress`         | Success with empty output (no-op).                              |
 | Specified item is `todo` (no baseline exists) | Error: no baseline snapshot. Run `plumb go` first.              |
 | Baseline snapshot file is missing on disk     | Error: baseline not found. This should not occur in normal use. |
 | File deleted after go-time                    | Diff shows all lines removed (file treated as empty).           |
+| Baseline or current file is non-UTF-8 bytes   | Prints `Binary files differ: <path>` for that item.             |
 | File unchanged since go-time                  | Empty diff (no output).                                         |
 
 ## Notes

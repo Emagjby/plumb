@@ -17,7 +17,8 @@ plumb finish
 Plumb tracks files through three states: `todo`, `in_progress`, `done`.
 When you start working on a file (`plumb go`), a baseline snapshot is captured
 and the file opens in vim. When you're done, `plumb diff` shows exactly what
-changed against that baseline. One file at a time, one session at a time.
+changed against that baseline. Keep work focused within one session, while
+supporting multiple `in_progress` items when needed.
 
 ## Commands
 
@@ -28,7 +29,7 @@ add -f <folder>    enqueue all files in a folder (recursive)
 rm <id|file>       removes a file from the queue
 status             show session progress
 go <id|file>       set item in_progress, capture baseline, open vim
-diff [id|file]     diff current file against baseline
+diff [id|file]     diff one item, or all in_progress items if omitted
 done [id|file]     mark in_progress item as done
 restore [id|file]  revert file to baseline (confirms before overwriting)
 next               print next todo item

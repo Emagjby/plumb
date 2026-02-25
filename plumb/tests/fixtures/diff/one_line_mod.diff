@@ -1,0 +1,6 @@
+--- baseline: src/a.txt
++++ current:  src/a.txt
+@@ -1,2 +1,2 @@
+ hello
+-world
++WORLD

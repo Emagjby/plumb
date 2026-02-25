@@ -69,7 +69,7 @@ See a complete walkthrough: [Typical flow](./examples/typical-flow.md).
 | [plumb rm](./commands/rm.md)         | Remove an item from the queue.                                |
 | [plumb status](./commands/status.md) | Show session progress and the current in-progress item.       |
 | [plumb go](./commands/go.md)         | Start working on a specific item; captures baseline snapshot and opens vim. |
-| [plumb diff](./commands/diff.md)     | Diff current file contents against the go-time baseline.      |
+| [plumb diff](./commands/diff.md)     | Diff a target item, or all `in_progress` items when target is omitted. |
 | [plumb done](./commands/done.md)         | Mark the in-progress item as done.                            |
 | [plumb restore](./commands/restore.md)   | Restore a file to its baseline snapshot.                      |
 | [plumb next](./commands/next.md)         | Print the next todo item without changing state.              |
@@ -84,7 +84,7 @@ See a complete walkthrough: [Typical flow](./examples/typical-flow.md).
 - **`plumb rm <id|file>`** -- Removes an item from the session queue. Cannot remove an `in_progress` item.
 - **`plumb status`** -- Prints counts of todo / in-progress / done items and the currently in-progress file, if any.
 - **`plumb go <id|file>`** -- Sets one `todo` item to `in_progress`, captures a baseline snapshot of that file's current contents, and opens the file in vim.
-- **`plumb diff [id|file]`** -- Shows the unified diff between the file's current contents on disk and its go-time baseline snapshot.
+- **`plumb diff [id|file]`** -- Shows the unified diff between go-time baseline and current contents. With no argument, diffs all `in_progress` items (no-op if none).
 - **`plumb done [id|file]`** -- Moves the current `in_progress` item to `done`.
 - **`plumb restore [id|file]`** -- Overwrites the file on disk with its go-time baseline snapshot. Prompts for confirmation before proceeding.
 - **`plumb next`** -- Prints the next `todo` item (lowest ID) without changing any state.
