@@ -27,6 +27,33 @@ fn read_items(root: &std::path::Path) -> Value {
     decode(&data).unwrap()
 }
 
+fn item_ids_and_paths(items_value: Value) -> (Vec<i64>, Vec<String>) {
+    let Value::List(items) = items_value else {
+        panic!("items should be a list");
+    };
+
+    let mut ids = Vec::new();
+    let mut paths = Vec::new();
+
+    for item in items {
+        let Value::Map(m) = item else {
+            panic!("item should be a map");
+        };
+
+        let Value::Int(id) = m.get("id").unwrap() else {
+            panic!("id should be an int");
+        };
+        let Value::String(path) = m.get("rel_path").unwrap() else {
+            panic!("rel_path should be a string");
+        };
+
+        ids.push(*id);
+        paths.push(path.clone());
+    }
+
+    (ids, paths)
+}
+
 #[test]
 fn add_creates_items_file() {
     let temp_dir = tempfile::tempdir().unwrap();
@@ -281,4 +308,240 @@ fn status_shows_correct_counts() {
         "status should show 0 done items, got: {}",
         stdout
     );
+}
+
+#[test]
+fn add_folder_happy_path_excludes_dirs_and_orders_lexicographically() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let root = temp_dir.path();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("start")
+        .assert()
+        .success();
+
+    fs::create_dir_all(root.join("src/nested")).unwrap();
+    fs::create_dir_all(root.join("src/.git")).unwrap();
+    fs::create_dir_all(root.join("src/node_modules/pkg")).unwrap();
+    fs::create_dir_all(root.join("src/target/build")).unwrap();
+    fs::create_dir_all(root.join("src/.plumb/cache")).unwrap();
+
+    fs::write(root.join("src/z.rs"), "").unwrap();
+    fs::write(root.join("src/a.rs"), "").unwrap();
+    fs::write(root.join("src/nested/m.rs"), "").unwrap();
+    fs::write(root.join("src/.git/ignored.rs"), "").unwrap();
+    fs::write(root.join("src/node_modules/pkg/ignored.js"), "").unwrap();
+    fs::write(root.join("src/target/build/ignored.rs"), "").unwrap();
+    fs::write(root.join("src/.plumb/cache/ignored.txt"), "").unwrap();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("-f")
+        .arg("src")
+        .assert()
+        .success();
+
+    let (ids, paths) = item_ids_and_paths(read_items(root));
+    assert_eq!(ids, vec![1, 2, 3]);
+    assert_eq!(
+        paths,
+        vec![
+            "src/a.rs".to_string(),
+            "src/nested/m.rs".to_string(),
+            "src/z.rs".to_string()
+        ]
+    );
+}
+
+#[test]
+fn add_folder_twice_is_deterministic_and_noop_on_second_run() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let root = temp_dir.path();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("start")
+        .assert()
+        .success();
+
+    fs::create_dir_all(root.join("src/deep")).unwrap();
+    fs::write(root.join("src/b.rs"), "").unwrap();
+    fs::write(root.join("src/deep/a.rs"), "").unwrap();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("-f")
+        .arg("src")
+        .assert()
+        .success();
+
+    let first = item_ids_and_paths(read_items(root));
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("-f")
+        .arg("src")
+        .assert()
+        .success();
+
+    let second = item_ids_and_paths(read_items(root));
+
+    assert_eq!(first, second, "second folder add should be a no-op");
+}
+
+#[test]
+fn add_folder_id_continuation_after_single_file_add() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let root = temp_dir.path();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("start")
+        .assert()
+        .success();
+
+    fs::write(root.join("first.rs"), "").unwrap();
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("src/b.rs"), "").unwrap();
+    fs::write(root.join("src/a.rs"), "").unwrap();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("first.rs")
+        .assert()
+        .success();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("-f")
+        .arg("src")
+        .assert()
+        .success();
+
+    let (ids, paths) = item_ids_and_paths(read_items(root));
+    assert_eq!(ids, vec![1, 2, 3]);
+    assert_eq!(
+        paths,
+        vec![
+            "first.rs".to_string(),
+            "src/a.rs".to_string(),
+            "src/b.rs".to_string()
+        ]
+    );
+}
+
+#[test]
+fn add_folder_requires_active_session() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let root = temp_dir.path();
+
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("src/a.rs"), "").unwrap();
+
+    let output = plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("-f")
+        .arg("src")
+        .output()
+        .unwrap();
+
+    assert!(
+        !output.status.success(),
+        "should fail without active session"
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr
+            .to_lowercase()
+            .contains("use `plumb start` to start a session"),
+        "expected rm/status-style no-active-session message, got: {}",
+        stderr
+    );
+    assert!(
+        stderr.to_lowercase().contains("no active session found"),
+        "expected no active session message, got: {}",
+        stderr
+    );
+    assert!(
+        !stderr
+            .to_lowercase()
+            .contains("failed to read the active file"),
+        "expected active-session related error, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn add_folder_with_only_excluded_files_adds_nothing() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let root = temp_dir.path();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("start")
+        .assert()
+        .success();
+
+    fs::create_dir_all(root.join("batch/.git")).unwrap();
+    fs::create_dir_all(root.join("batch/node_modules/pkg")).unwrap();
+    fs::create_dir_all(root.join("batch/target/build")).unwrap();
+    fs::create_dir_all(root.join("batch/.plumb/cache")).unwrap();
+    fs::write(root.join("batch/.git/skip.txt"), "").unwrap();
+    fs::write(root.join("batch/node_modules/pkg/skip.js"), "").unwrap();
+    fs::write(root.join("batch/target/build/skip.rs"), "").unwrap();
+    fs::write(root.join("batch/.plumb/cache/skip.txt"), "").unwrap();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("-f")
+        .arg("batch")
+        .assert()
+        .success();
+
+    let (ids, paths) = item_ids_and_paths(read_items(root));
+    assert!(ids.is_empty());
+    assert!(paths.is_empty());
+}
+
+#[test]
+fn add_folder_dot_path_behavior_is_defined() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let root = temp_dir.path();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("start")
+        .assert()
+        .success();
+
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::create_dir_all(root.join(".git")).unwrap();
+    fs::create_dir_all(root.join("node_modules/pkg")).unwrap();
+    fs::create_dir_all(root.join("target/build")).unwrap();
+
+    fs::write(root.join("root.rs"), "").unwrap();
+    fs::write(root.join("src/lib.rs"), "").unwrap();
+    fs::write(root.join(".git/ignored.txt"), "").unwrap();
+    fs::write(root.join("node_modules/pkg/ignored.js"), "").unwrap();
+    fs::write(root.join("target/build/ignored.rs"), "").unwrap();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("-f")
+        .arg(".")
+        .assert()
+        .success();
+
+    let (ids, paths) = item_ids_and_paths(read_items(root));
+    assert_eq!(ids, vec![1, 2]);
+    assert_eq!(paths, vec!["root.rs".to_string(), "src/lib.rs".to_string()]);
 }

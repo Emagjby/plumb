@@ -11,6 +11,7 @@ rand = "0.10.0"
 strata-rs = "0.4.3"
 thiserror = "2.0.18"
 time = "0.3.47"
+walkdir = "2.5.0"
 
 [dev-dependencies]
 assert_cmd = "2.1.2"
