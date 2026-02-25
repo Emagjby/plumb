@@ -25,6 +25,7 @@ changed against that baseline. One file at a time, one session at a time.
 start [name]       begin a new session
 add <file>         enqueue a file as todo
 add -f <folder>    enqueue all files in a folder (recursive)
+rm <id|file>       removes a file from the queue
 status             show session progress
 go <id|file>       set item in_progress, capture baseline, open vim
 diff [id|file]     diff current file against baseline
