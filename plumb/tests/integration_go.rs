@@ -135,53 +135,6 @@ fn go_marks_item_in_progress_and_persists() {
 }
 
 #[test]
-fn go_refuses_second_go_when_one_in_progress_and_leaves_other_todo() {
-    let temp_dir = tempfile::tempdir().unwrap();
-    let root = temp_dir.path();
-
-    plumb_binary()
-        .current_dir(root)
-        .arg("start")
-        .assert()
-        .success();
-    fs::write(root.join("a.rs"), "a").unwrap();
-    fs::write(root.join("b.rs"), "b").unwrap();
-
-    plumb_binary()
-        .current_dir(root)
-        .arg("add")
-        .arg("a.rs")
-        .assert()
-        .success();
-    plumb_binary()
-        .current_dir(root)
-        .arg("add")
-        .arg("b.rs")
-        .assert()
-        .success();
-
-    let first_go = go_with_true_editor(root, "1");
-    assert!(
-        first_go.status.success(),
-        "first go should succeed: {}",
-        String::from_utf8_lossy(&first_go.stderr)
-    );
-
-    let second_go = go_with_true_editor(root, "2");
-    assert!(!second_go.status.success(), "second go should fail");
-
-    let stderr = String::from_utf8_lossy(&second_go.stderr);
-    assert!(
-        stderr.to_lowercase().contains("already in progress"),
-        "expected in-progress error, got: {}",
-        stderr
-    );
-
-    assert_eq!(item_state(root, "a.rs"), "in_progress");
-    assert_eq!(item_state(root, "b.rs"), "todo");
-}
-
-#[test]
 fn go_missing_file_fails_leaves_todo_and_no_baseline_file() {
     let temp_dir = tempfile::tempdir().unwrap();
     let root = temp_dir.path();

@@ -1,7 +1,10 @@
 use thiserror::Error;
 
 use crate::{
-    commands::{add::AddError, go::GoError, rm::RmError, start::StartError, status::StatusError},
+    commands::{
+        add::AddError, diff::DiffError, go::GoError, rm::RmError, start::StartError,
+        status::StatusError,
+    },
     fs::InputError,
     store::items::StoreError,
     workspace::WorkspaceError,
@@ -9,6 +12,8 @@ use crate::{
 
 #[derive(Error, Debug)]
 pub enum PlumbError {
+    #[error("diff error: {0}")]
+    DiffError(#[from] DiffError),
     #[error("go error: {0}")]
     GoError(#[from] GoError),
     #[error("rm error: {0}")]

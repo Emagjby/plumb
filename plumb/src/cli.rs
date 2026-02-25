@@ -2,7 +2,8 @@ use clap::{Parser, Subcommand};
 
 use crate::{
     commands::{
-        add::plumb_add, go::plumb_go, rm::plumb_rm, start::plumb_start, status::plumb_status,
+        add::plumb_add, diff::plumb_diff, go::plumb_go, rm::plumb_rm, start::plumb_start,
+        status::plumb_status,
     },
     error::PlumbError,
 };
@@ -41,7 +42,7 @@ pub enum Commands {
         /// Path to the file to add.
         /// Example: "src/auth/guards.rs"
         #[arg(verbatim_doc_comment)]
-        file: String,
+        target: String,
     },
 
     /// Remove a file from the current session's queue.
@@ -49,7 +50,7 @@ pub enum Commands {
         /// File path or item ID to remove.
         /// Example: "src/auth/guards.rs" or 3
         #[arg(verbatim_doc_comment)]
-        file: String,
+        target: String,
     },
 
     /// Prints the current session's queue of files to be refactored.
@@ -61,7 +62,17 @@ pub enum Commands {
         /// File path or item ID of the file to refactor.
         /// Example: "src/auth/guards.rs"
         #[arg(verbatim_doc_comment)]
-        file: String,
+        target: String,
+    },
+
+    /// Compares the current version of the file with the baseline, and
+    /// prints the diff to the terminal.
+    Diff {
+        /// File path or item ID of the file to diff.
+        /// Omit to diff all items currently `In Progress`.
+        /// Example: "src/auth/guards.rs"
+        #[arg(verbatim_doc_comment)]
+        target: Option<String>,
     },
 }
 
@@ -70,10 +81,11 @@ pub fn run() -> Result<(), PlumbError> {
 
     match cli.command {
         Commands::Start { name } => plumb_start(name)?,
-        Commands::Add { folder, file } => plumb_add(file, folder)?,
+        Commands::Add { folder, target } => plumb_add(target, folder)?,
         Commands::Status {} => plumb_status()?,
-        Commands::Rm { file } => plumb_rm(file)?,
-        Commands::Go { file } => plumb_go(file)?,
+        Commands::Rm { target } => plumb_rm(target)?,
+        Commands::Go { target } => plumb_go(target)?,
+        Commands::Diff { target } => plumb_diff(target)?,
     }
 
     Ok(())

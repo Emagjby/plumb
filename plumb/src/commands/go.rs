@@ -69,7 +69,7 @@ where
     FCapture: FnMut(&Path, &str, usize, &str) -> Result<(), GoError>,
     FMark: FnMut(&Path, &str, usize) -> Result<(), GoError>,
 {
-    let root = resolve_workspace_root(&cwd).map_err(|e| GoError::UnknownError(e.to_string()))?;
+    let root = resolve_workspace_root(cwd).map_err(|e| GoError::UnknownError(e.to_string()))?;
 
     let session_id = active_session_id(&root).map_err(|_| {
         GoError::NoActiveSession(
@@ -105,7 +105,7 @@ where
 }
 
 fn go_plan<F>(
-    items: &[Item],
+    _items: &[Item],
     item_id: usize,
     normalized_path: &str,
     state: State,
@@ -127,16 +127,6 @@ where
             item_id,
             normalized_path: normalized_path.to_string(),
         });
-    }
-
-    if let Some(in_progress_item) = items
-        .iter()
-        .find(|item| item.state == State::InProgress && item.id != item_id)
-    {
-        return Err(GoError::AlreadyInProgress(format!(
-            "another item is already in progress: [{}] {}",
-            in_progress_item.id, in_progress_item.rel_path
-        )));
     }
 
     pre_baseline_check()?;
@@ -247,6 +237,7 @@ fn capture_baseline(
     Ok(())
 }
 
+// ---- Unit Tests ----
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -489,17 +480,6 @@ mod tests {
         assert_eq!(mark_calls.get(), 0);
         assert_eq!(open_calls.get(), 0);
         assert_eq!(load_items(root).unwrap()[0].state, State::Todo);
-    }
-
-    #[test]
-    fn go_refuses_second_go_when_any_item_already_in_progress() {
-        let items = vec![
-            make_item(1, "a.rs", State::InProgress),
-            make_item(2, "b.rs", State::Todo),
-        ];
-
-        let err = go_plan(&items, 2, "b.rs", State::Todo, || Ok(())).unwrap_err();
-        assert!(matches!(err, GoError::AlreadyInProgress(msg) if msg.contains("[1] a.rs")));
     }
 
     #[test]
