@@ -31,7 +31,11 @@ pub enum Commands {
 
     /// Add a file (or a folder with -f --folder) to the current session's queue.
     Add {
-        // TODO: ADD FOLDER LATER
+        /// Treat the given path as a folder,
+        /// and enqueue all files recursively.
+        #[arg(short = 'f', long = "folder", verbatim_doc_comment)]
+        folder: bool,
+
         /// Path to the file to add.
         /// Example: "src/auth/guards.rs"
         #[arg(verbatim_doc_comment)]
@@ -55,7 +59,7 @@ pub fn run() -> Result<(), PlumbError> {
 
     match cli.command {
         Commands::Start { name } => plumb_start(name)?,
-        Commands::Add { file } => plumb_add(file)?,
+        Commands::Add { folder, file } => plumb_add(file, folder)?,
         Commands::Status {} => plumb_status()?,
         Commands::Rm { file } => plumb_rm(file)?,
     }

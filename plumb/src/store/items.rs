@@ -37,8 +37,17 @@ pub fn active_session_id(root: &Path) -> Result<String, StoreError> {
     })?;
     let session_file = workspace_root.join(".plumb").join("active");
 
-    let content = std::fs::read_to_string(&session_file)
-        .map_err(|e| StoreError::ReadError(format!("Could not read active file: {e}")))?;
+    if !session_file.is_file() {
+        return Err(StoreError::NoActiveSession);
+    }
+
+    let content = std::fs::read_to_string(&session_file).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::NotFound {
+            StoreError::NoActiveSession
+        } else {
+            StoreError::ReadError(format!("Could not read active file: {e}"))
+        }
+    })?;
 
     let session_id = content.trim().to_string();
     if session_id.is_empty() {
@@ -216,7 +225,7 @@ mod tests {
 
         let result = active_session_id(workspace.path());
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), StoreError::ReadError(_)));
+        assert!(matches!(result.unwrap_err(), StoreError::NoActiveSession));
     }
 
     #[test]
