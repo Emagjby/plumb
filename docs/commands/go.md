@@ -64,15 +64,13 @@ plumb go src/auth/guard.rs
 
 ## Notes
 
-- **Single in-progress rule.** Only one item may be `in_progress` at a time. If
-  another item is already `in_progress`, `plumb go` fails with an error. Run
-  `plumb done` on the current item first.
 - **File must exist.** If the file does not exist on disk, `plumb go` fails and
   the item stays `todo`.
 - **File must be readable.** If the file cannot be read (e.g. permission denied),
   `plumb go` fails and the item stays `todo`.
 - **Item must be `todo`.** Running `plumb go` on a `done` item is an error.
-- **Opens vim.** After capturing the baseline, Plumb opens the file in `vim`.
+- **Opens editor (defaults to vim).** After capturing the baseline, Plumb opens the
+  file in your editor. If none is set, it defaults to `vim`
   Plumb waits for vim to exit before returning control to the terminal.
 - Requires an active session.
 

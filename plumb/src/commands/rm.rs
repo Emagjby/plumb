@@ -3,8 +3,9 @@ use std::path::Path;
 use thiserror::Error;
 
 use crate::{
-    fs::normalize_rel_path,
+    helpers::{HelperError, resolve_item},
     store::items::{Item, State, active_session_id, load_items, save_items, session_dir},
+    workspace::resolve_workspace_root,
 };
 
 #[derive(Debug, Error)]
@@ -18,13 +19,14 @@ pub enum RmError {
     #[error("{0}")]
     FileNotInQueue(String),
     #[error("{0}")]
+    HelperError(#[from] HelperError),
+    #[error("{0}")]
     UnknownError(String),
 }
 
 pub fn plumb_rm(target: String) -> Result<(), RmError> {
     let cwd = std::env::current_dir().map_err(|e| RmError::UnknownError(e.to_string()))?;
-    let root = crate::workspace::resolve_workspace_root(&cwd)
-        .map_err(|e| RmError::UnknownError(e.to_string()))?;
+    let root = resolve_workspace_root(&cwd).map_err(|e| RmError::UnknownError(e.to_string()))?;
 
     let session_id = active_session_id(&root).map_err(|_| {
         RmError::NoActiveSession(
@@ -50,31 +52,6 @@ pub fn plumb_rm(target: String) -> Result<(), RmError> {
     println!("Removed: [{}] {}", item_id, normalized_path);
 
     Ok(())
-}
-
-fn resolve_item(
-    root: &Path,
-    items: &[Item],
-    target: &str,
-) -> Result<(usize, String, State), RmError> {
-    if target.chars().all(|c| c.is_ascii_digit())
-        && let Ok(id) = target.parse::<usize>()
-        && let Some(item) = items.iter().find(|item| item.id == id)
-    {
-        return Ok((item.id, item.rel_path.clone(), item.state.clone()));
-    }
-
-    let normalized_path = normalize_rel_path(root, Path::new(target))
-        .map_err(|e| RmError::UnknownError(e.to_string()))?;
-
-    let item = items
-        .iter()
-        .find(|item| item.rel_path == normalized_path)
-        .ok_or_else(|| {
-            RmError::FileNotInQueue(format!("file not in queue: {}", normalized_path))
-        })?;
-
-    Ok((item.id, normalized_path, item.state.clone()))
 }
 
 fn remove_item(items: &[Item], item_id: usize) -> Result<Vec<Item>, RmError> {

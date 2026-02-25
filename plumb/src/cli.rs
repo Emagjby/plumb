@@ -1,7 +1,9 @@
 use clap::{Parser, Subcommand};
 
 use crate::{
-    commands::{add::plumb_add, rm::plumb_rm, start::plumb_start, status::plumb_status},
+    commands::{
+        add::plumb_add, go::plumb_go, rm::plumb_rm, start::plumb_start, status::plumb_status,
+    },
     error::PlumbError,
 };
 
@@ -52,6 +54,15 @@ pub enum Commands {
 
     /// Prints the current session's queue of files to be refactored.
     Status {},
+
+    /// Opens the specified file in the editor, captures baseline, and updates status to "In
+    /// Progress".
+    Go {
+        /// File path or item ID of the file to refactor.
+        /// Example: "src/auth/guards.rs"
+        #[arg(verbatim_doc_comment)]
+        file: String,
+    },
 }
 
 pub fn run() -> Result<(), PlumbError> {
@@ -62,6 +73,7 @@ pub fn run() -> Result<(), PlumbError> {
         Commands::Add { folder, file } => plumb_add(file, folder)?,
         Commands::Status {} => plumb_status()?,
         Commands::Rm { file } => plumb_rm(file)?,
+        Commands::Go { file } => plumb_go(file)?,
     }
 
     Ok(())

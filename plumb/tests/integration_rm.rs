@@ -279,3 +279,54 @@ fn rm_refuses_to_remove_in_progress_item() {
     };
     assert_eq!(items.len(), 1, "item should still exist after failed rm");
 }
+
+#[test]
+fn rm_accepts_id_and_path_via_shared_resolve_item() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let root = temp_dir.path();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("start")
+        .assert()
+        .success();
+
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("src/a.rs"), "").unwrap();
+    fs::write(root.join("src/b.rs"), "").unwrap();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("src/a.rs")
+        .assert()
+        .success();
+    plumb_binary()
+        .current_dir(root)
+        .arg("add")
+        .arg("src/b.rs")
+        .assert()
+        .success();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("rm")
+        .arg("1")
+        .assert()
+        .success();
+
+    plumb_binary()
+        .current_dir(root)
+        .arg("rm")
+        .arg("src/b.rs")
+        .assert()
+        .success();
+
+    let Value::List(items) = read_items(root) else {
+        panic!("items should be a list");
+    };
+    assert!(
+        items.is_empty(),
+        "both id and path forms should resolve and remove items"
+    );
+}
