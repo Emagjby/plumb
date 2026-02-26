@@ -25,7 +25,7 @@ pub fn plumb_next() -> Result<(), NextError> {
 }
 
 fn plumb_next_from_cwd(cwd: &Path) -> Result<(), NextError> {
-    let root = resolve_workspace_root(&cwd)?;
+    let root = resolve_workspace_root(cwd)?;
 
     let _session_id = active_session_id(&root).map_err(|_| {
         NextError::NoActiveSession(

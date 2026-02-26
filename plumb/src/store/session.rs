@@ -1,6 +1,8 @@
 use std::path::Path;
 
-use strata::{decode::decode, value::Value};
+use strata::{decode::decode, encode::encode, value::Value};
+
+use crate::fs::atomic_write;
 
 use super::items::{StoreError, session_dir};
 
@@ -9,6 +11,59 @@ pub struct Session {
     pub session_id: String,
     pub name: String,
     pub created_at_nanos: i128,
+}
+
+pub fn close_session(root: &Path, session_id: &str) -> Result<(), StoreError> {
+    mark_session_finished(root, session_id)?;
+    clear_active_session(root, session_id)?;
+    Ok(())
+}
+
+fn mark_session_finished(root: &Path, session_id: &str) -> Result<(), StoreError> {
+    let dir = session_dir(root, session_id)?;
+    let session_file = dir.join("session.scb");
+
+    let raw = std::fs::read(&session_file)
+        .map_err(|e| StoreError::ReadError(format!("Could not read session.scb: {e}")))?;
+
+    let decoded = decode(&raw)
+        .map_err(|e| StoreError::ReadError(format!("Failed to decode session.scb: {:?}", e)))?;
+
+    let mut map = match decoded {
+        Value::Map(m) => m,
+        _ => {
+            return Err(StoreError::ReadError(
+                "session.scb: expected a map".to_string(),
+            ));
+        }
+    };
+
+    map.insert("status".to_string(), Value::String("finished".to_string()));
+
+    let updated = encode(&Value::Map(map))
+        .map_err(|e| StoreError::WriteError(format!("Failed to encode session.scb: {:?}", e)))?;
+
+    atomic_write(&session_file, &updated)
+        .map_err(|e| StoreError::WriteError(format!("Failed to write session.scb: {e}")))?;
+
+    Ok(())
+}
+
+fn clear_active_session(root: &Path, session_id: &str) -> Result<(), StoreError> {
+    let active_path = root.join(".plumb").join("active");
+    if !active_path.is_file() {
+        return Ok(());
+    }
+
+    let active_id = std::fs::read_to_string(&active_path)
+        .map_err(|e| StoreError::ReadError(format!("Could not read active file: {e}")))?;
+
+    if active_id.trim() == session_id {
+        atomic_write(&active_path, b"")
+            .map_err(|e| StoreError::WriteError(format!("Failed to clear active file: {e}")))?;
+    }
+
+    Ok(())
 }
 
 pub fn load_session(root: &Path, session_id: &str) -> Result<Session, StoreError> {
@@ -104,6 +159,46 @@ mod tests {
         fs::write(session_dir.join("session.scb"), scb).unwrap();
 
         workspace
+    }
+
+    fn session_map(root: &Path, session_id: &str) -> std::collections::BTreeMap<String, Value> {
+        let raw = fs::read(
+            root.join(".plumb")
+                .join("sessions")
+                .join(session_id)
+                .join("session.scb"),
+        )
+        .unwrap();
+        match decode(&raw).unwrap() {
+            Value::Map(m) => m,
+            _ => panic!("session.scb should decode to map"),
+        }
+    }
+
+    #[test]
+    fn close_session_marks_session_finished_and_clears_active_pointer() {
+        let tmp = TempDir::new().unwrap();
+        let workspace = create_workspace_with_session_scb(&tmp, "deadbeef", "my-session", 42);
+
+        close_session(workspace.path(), "deadbeef").unwrap();
+
+        let active = fs::read_to_string(workspace.path().join(".plumb").join("active")).unwrap();
+        assert!(active.trim().is_empty(), "active file should be cleared");
+
+        let map = session_map(workspace.path(), "deadbeef");
+        assert!(matches!(map.get("status"), Some(Value::String(s)) if s == "finished"));
+    }
+
+    #[test]
+    fn close_session_does_not_clear_active_if_it_points_to_other_session() {
+        let tmp = TempDir::new().unwrap();
+        let workspace = create_workspace_with_session_scb(&tmp, "deadbeef", "my-session", 42);
+        fs::write(workspace.path().join(".plumb").join("active"), "cafebabe").unwrap();
+
+        close_session(workspace.path(), "deadbeef").unwrap();
+
+        let active = fs::read_to_string(workspace.path().join(".plumb").join("active")).unwrap();
+        assert_eq!(active, "cafebabe");
     }
 
     #[test]
