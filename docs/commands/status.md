@@ -1,6 +1,6 @@
 # plumb status
 
-Show the state of the active session.
+Print active session summary and queue listing.
 
 ## Synopsis
 
@@ -8,65 +8,33 @@ Show the state of the active session.
 plumb status
 ```
 
-## Description
+## Behavior
 
-Prints a summary of the active session: counts of items in each state and the
-file currently being worked on (if any).
+Prints in this order:
 
-## Arguments
+1. structured header record
+2. counts by state
+3. `queue:` section with all items in stored order
 
-None.
+Count lines:
 
-## Options
+- `<n> item(s) [TODO]`
+- `<n> item(s) [IN_PROGRESS]`
+- `<n> item(s) [DONE]`
 
-None.
+Queue row format:
 
-## Output
+- `[<id>] <rel_path> - <state>`
 
-The output includes:
+## Output Header
 
-- **Session name** (if one was given at start).
-- **Counts** for each state: `todo`, `in_progress`, `done`.
-- **Current item**: the file currently `in_progress`, if any.
-
-Example output:
-
-```
-Session: refactor auth guards
-
-  todo:        3
-  in_progress: 1
-  done:        2
-
-In progress: [3] src/middleware/cors.rs
+```text
+info[PLB-OUT-SES-002]: session status
 ```
 
-If no item is in progress:
+Verbose header includes `session_id`.
 
-```
-Session: refactor auth guards
+## Common Errors
 
-  todo:        3
-  in_progress: 0
-  done:        2
-
-No item in progress.
-```
-
-## Examples
-
-```bash
-plumb status
-```
-
-## Notes
-
-- Requires an active session. Fails if no session is active.
-- This command is read-only. It does not change any item state.
-
-## See also
-
-- [plumb next](./next.md) -- print the next todo item.
-- [plumb go](./go.md) -- start working on an item.
-- [Sessions](../concepts/sessions.md)
-- [States](../concepts/states.md)
+- no active session: `PLB-SES-001`
+- store read/decode/schema failures: `PLB-STO-*`

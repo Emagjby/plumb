@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::fs::atomic_write;
+use crate::output::OutputMessage;
 use rand::Rng;
 use strata::{bytes, encode::encode, map, string, value::Value};
 use thiserror::Error;
@@ -80,11 +81,13 @@ pub fn initialize_session(root: &Path, name: &str) -> Result<(), WorkspaceError>
     initialize_session_metadata(&session_dir, &session_id, name)?;
     write_active_session(root, &session_id)?;
 
-    if name.is_empty() {
-        println!("Started new session with id {}", session_id);
-    } else {
-        println!("Started new session '{}' with id {}", name, session_id);
+    let mut message =
+        OutputMessage::ok("PLB-OUT-SES-001", "session started").with_command("plumb start");
+    message = message.with_context("session_id", session_id.clone());
+    if !name.is_empty() {
+        message = message.with_context("name", name.to_string());
     }
+    print!("{message}");
 
     Ok(())
 }

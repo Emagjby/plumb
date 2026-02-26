@@ -4,6 +4,7 @@ use thiserror::Error;
 
 use crate::{
     helpers::{HelperError, resolve_item},
+    output::OutputMessage,
     store::items::{Item, State, active_session_id, load_items, save_items, session_dir},
     workspace::resolve_workspace_root,
 };
@@ -49,7 +50,13 @@ pub fn plumb_rm(target: String) -> Result<(), RmError> {
     let new_items = remove_item(&items, item_id)?;
     save_items(&root, &session_id, &new_items)?;
 
-    println!("Removed: [{}] {}", item_id, normalized_path);
+    print!(
+        "{}",
+        OutputMessage::ok("PLB-OUT-ITM-005", "item removed from queue")
+            .with_command("plumb rm")
+            .with_context("item_id", item_id.to_string())
+            .with_context("path", normalized_path)
+    );
 
     Ok(())
 }

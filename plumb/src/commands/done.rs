@@ -4,6 +4,7 @@ use thiserror::Error;
 
 use crate::{
     helpers::{HelperError, resolve_item},
+    output::OutputMessage,
     store::items::{State, StoreError, active_session_id, load_items, save_items},
     workspace::{WorkspaceError, resolve_workspace_root},
 };
@@ -66,7 +67,13 @@ fn mark_as_done(root: &Path, session_id: &str, target: String) -> Result<(), Don
 
     save_items(root, session_id, &items).map_err(DoneError::StoreError)?;
 
-    println!("Marked as Done: {}", normalized_path);
+    print!(
+        "{}",
+        OutputMessage::ok("PLB-OUT-ITM-006", "item marked as done")
+            .with_command("plumb done")
+            .with_context("item_id", item_id.to_string())
+            .with_context("path", normalized_path)
+    );
 
     Ok(())
 }

@@ -1,46 +1,32 @@
 # States
 
-Every [item](./items.md) in a session is in exactly one of three states.
+Each item has one state: `todo`, `in_progress`, or `done`.
 
-## State definitions
+## Meanings
 
-| State | Meaning |
-|-------|---------|
-| `todo` | Queued for refactoring. Not yet started. |
-| `in_progress` | Actively being refactored. A baseline snapshot exists. |
-| `done` | Refactoring complete. |
+- `todo`: queued, not started
+- `in_progress`: baseline captured and item opened for work
+- `done`: marked complete
 
 ## Transitions
 
-```
-todo ──> in_progress ──> done
-```
+Implemented transitions:
 
-- **`todo` -> `in_progress`** -- Triggered by `plumb go <id|file>`. A baseline
-  snapshot of the file is captured at this moment.
-- **`in_progress` -> `done`** -- Triggered by `plumb done [id|file]`.
+- `todo -> in_progress` via `plumb go`
+- `in_progress -> done` via `plumb done`
 
-No other transitions are valid. An item cannot move backwards (e.g. from `done`
-back to `todo`). An item cannot skip states (e.g. from `todo` directly to
-`done`).
+Other behaviors:
 
-## Single in-progress rule
+- `restore` keeps current state unchanged
+- `rm` removes item entirely (`todo`/`done` only)
 
-At most **one item** may be `in_progress` at any time within a session. Running
-`plumb go` when another item is already `in_progress` is an error -- you must
-`plumb done` the current item first.
+## Important Reality
 
-This constraint keeps the workflow linear and predictable: one file at a time.
+Current implementation does not enforce a single `in_progress` item.
+Multiple items can be `in_progress` at once.
 
-## Checking state
+## Related Commands
 
-- `plumb status` shows counts per state and the current `in_progress` item.
-- `plumb next` shows the next `todo` item (lowest ID).
-
-## See also
-
-- [Items](./items.md) -- the objects that carry state.
-- [Snapshots](./snapshots.md) -- baselines created on the `todo` -> `in_progress` transition.
-- [plumb go](../commands/go.md)
-- [plumb done](../commands/done.md)
-- [plumb status](../commands/status.md)
+- [../commands/go.md](../commands/go.md)
+- [../commands/done.md](../commands/done.md)
+- [../commands/status.md](../commands/status.md)

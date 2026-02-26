@@ -7,23 +7,28 @@ use crate::{
         status::plumb_status,
     },
     error::PlumbError,
+    verbosity::set_verbose,
 };
 
 #[derive(Parser)]
 #[command(
     name = "plumb",
     version,
-    about = "plumb CLI",
-    long_about = "A CLI for running refactor sessions as a disciplined queue of files."
+    about = "Run refactor sessions as a disciplined file queue.",
+    long_about = "A local CLI for running refactor sessions as a disciplined queue of files."
 )]
 pub struct Cli {
+    /// Show detailed structured output and diagnostics.
+    #[arg(short = 'v', long = "verbose", global = true)]
+    pub verbose: bool,
+
     #[command(subcommand)]
     pub command: Commands,
 }
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Begin a new refactor session.
+    /// Start a new refactor session.
     Start {
         /// Optional session label.
         /// Example: "refactor auth guards"
@@ -33,7 +38,7 @@ pub enum Commands {
         name: Option<String>,
     },
 
-    /// Add a file (or a folder with -f --folder) to the current session's queue.
+    /// Add a file or folder contents to the active session queue.
     Add {
         /// Treat the given path as a folder,
         /// and enqueue all files recursively.
@@ -46,7 +51,7 @@ pub enum Commands {
         target: String,
     },
 
-    /// Remove a file from the current session's queue.
+    /// Remove an item from the active session queue.
     Rm {
         /// File path or item ID to remove.
         /// Example: "src/auth/guards.rs" or 3
@@ -54,11 +59,10 @@ pub enum Commands {
         target: String,
     },
 
-    /// Prints the current session's queue of files to be refactored.
+    /// Show queue counts and items for the active session.
     Status {},
 
-    /// Opens the specified file in the editor, captures baseline, and updates status to "In
-    /// Progress".
+    /// Start or reopen work on a queued item.
     Go {
         /// File path or item ID of the file to refactor.
         /// Example: "src/auth/guards.rs"
@@ -66,8 +70,7 @@ pub enum Commands {
         target: String,
     },
 
-    /// Compares the current version of the file with the baseline, and
-    /// prints the diff to the terminal.
+    /// Show baseline versus current diff for one item or all in-progress items.
     Diff {
         /// File path or item ID of the file to diff.
         /// Omit to diff all items currently `In Progress`.
@@ -76,29 +79,30 @@ pub enum Commands {
         target: Option<String>,
     },
 
-    /// Marks an "In Progress" item as "Done".
+    /// Mark an in-progress item as done.
     Done {
         /// File path or item ID of the file to mark as done.
         /// Example: "src/auth/guards.rs"
         target: String,
     },
 
-    /// Prints the next "To Do" item in the queue, if any.
+    /// Show the next todo item in queue order.
     Next {},
 
-    /// Restores the file to the baseline version.
+    /// Restore a file from its baseline snapshot.
     Restore {
         /// File path or item ID of the file to restore.
         /// Example: "src/auth/guards.rs"
         target: String,
     },
 
-    /// Closes the current session.
+    /// Finish the active session.
     Finish {},
 }
 
 pub fn run() -> Result<(), PlumbError> {
     let cli = Cli::parse();
+    set_verbose(cli.verbose);
 
     match cli.command {
         Commands::Start { name } => plumb_start(name)?,

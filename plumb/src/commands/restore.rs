@@ -8,6 +8,7 @@ use thiserror::Error;
 use crate::{
     fs::atomic_write,
     helpers::{HelperError, load_baseline, resolve_item},
+    output::OutputMessage,
     store::items::{Item, State, StoreError, active_session_id, load_items},
     workspace::{WorkspaceError, resolve_workspace_root},
 };
@@ -73,12 +74,23 @@ where
     })?;
 
     if !confirm_fn(&normalized_path)? {
-        println!("Restore cancelled.");
+        print!(
+            "{}",
+            OutputMessage::info("PLB-OUT-SNP-003", "Restore cancelled.")
+                .with_command("plumb restore")
+                .with_context("path", normalized_path)
+        );
         return Ok(());
     }
 
     write_fn(&full_path, &baseline)?;
-    println!("Restored: [{}] {}", item_id, normalized_path);
+    print!(
+        "{}",
+        OutputMessage::ok("PLB-OUT-SNP-004", "file restored to baseline snapshot")
+            .with_command("plumb restore")
+            .with_context("item_id", item_id.to_string())
+            .with_context("path", normalized_path)
+    );
 
     Ok(())
 }
@@ -122,8 +134,13 @@ fn write_baseline_bytes(path: &Path, baseline: &[u8]) -> Result<(), RestoreError
 }
 
 fn prompt_confirmation(path: &str) -> Result<bool, RestoreError> {
-    println!("Restore {} to baseline snapshot?", path);
-    println!("All changes since go-time will be lost.");
+    print!(
+        "{}",
+        OutputMessage::prompt("PLB-OUT-SNP-002", "restore file to baseline snapshot")
+            .with_command("plumb restore")
+            .with_context("path", path)
+            .with_note("all changes since go-time will be lost")
+    );
     print!("Are you sure? [y/N] ");
     io::stdout()
         .flush()

@@ -3,6 +3,7 @@ use std::path::Path;
 use thiserror::Error;
 
 use crate::{
+    output::OutputMessage,
     store::{
         items::{State, StoreError, active_session_id, load_items},
         session::close_session,
@@ -35,7 +36,12 @@ pub fn plumb_finish() -> Result<(), FinishError> {
     check_in_progress_items(&root)?;
     close_session(&root, &session_id)?;
 
-    println!("Session {session_id} finished successfully.");
+    print!(
+        "{}",
+        OutputMessage::ok("PLB-OUT-SES-003", "session finished")
+            .with_command("plumb finish")
+            .with_context("session_id", session_id)
+    );
 
     Ok(())
 }

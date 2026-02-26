@@ -59,8 +59,8 @@ fn clear_active_session(root: &Path, session_id: &str) -> Result<(), StoreError>
         .map_err(|e| StoreError::ReadError(format!("Could not read active file: {e}")))?;
 
     if active_id.trim() == session_id {
-        atomic_write(&active_path, b"")
-            .map_err(|e| StoreError::WriteError(format!("Failed to clear active file: {e}")))?;
+        std::fs::remove_file(&active_path)
+            .map_err(|e| StoreError::WriteError(format!("Failed to remove active file: {e}")))?;
     }
 
     Ok(())
@@ -182,8 +182,10 @@ mod tests {
 
         close_session(workspace.path(), "deadbeef").unwrap();
 
-        let active = fs::read_to_string(workspace.path().join(".plumb").join("active")).unwrap();
-        assert!(active.trim().is_empty(), "active file should be cleared");
+        assert!(
+            !workspace.path().join(".plumb").join("active").exists(),
+            "active file should be removed"
+        );
 
         let map = session_map(workspace.path(), "deadbeef");
         assert!(matches!(map.get("status"), Some(Value::String(s)) if s == "finished"));

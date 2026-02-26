@@ -1,124 +1,37 @@
 # plumb rm
 
-Remove an item from the active session's queue.
+Remove an item from the active session queue.
 
 ## Synopsis
 
 ```bash
-plumb rm <id|file>
+plumb rm <target>
 ```
-
-## Description
-
-Removes an item from the session queue entirely. The item is deleted from
-`items.scb` and will no longer appear in `plumb status` or any other listing.
-
-You can specify the item to remove by its **integer ID** or by **file path**
-(relative to the workspace root). The argument is required -- there is no
-default target.
-
-## Arguments
-
-<<<<<<< HEAD
-| Argument        | Required | Description                                                                                  |
-| --------------- | -------- | -------------------------------------------------------------------------------------------- |
-| `id` or `file`  | Yes      | The item to remove. Accepts an integer ID or a file path relative to the workspace root.     |
-=======
-| Argument       | Required | Description                                                                              |
-| -------------- | -------- | ---------------------------------------------------------------------------------------- |
-| `id` or `file` | Yes      | The item to remove. Accepts an integer ID or a file path relative to the workspace root. |
->>>>>>> f501775 (feat(items): add items.scb store + plumb add & plumb status)
-
-## Options
-
-None.
 
 ## Behavior
 
-When the target item is found, `plumb rm` does the following:
+Resolves target by id or path, then:
 
-1. Removes the item from the session's item list.
-2. Writes the updated list to `items.scb`.
+- allows removal for `todo`
+- allows removal for `done`
+- rejects removal for `in_progress`
 
-**IDs are not reassigned.** Removing item 2 from a queue of [1, 2, 3] leaves
-items 1 and 3 with their original IDs. Future `plumb add` calls continue
-incrementing from the session's current highest ID.
+When removal succeeds, it also deletes baseline snapshot if present:
 
-If the removed item had a baseline snapshot on disk
-(`.plumb/sessions/<session_id>/snapshots/<item_id>.baseline`), it is **deleted**
-as part of the removal.
+- `.plumb/sessions/<session_id>/snapshots/<item_id>.baseline`
 
-## State restrictions
+Item ids are not renumbered.
 
-<<<<<<< HEAD
-| Item state    | Allowed | Detail                                                                 |
-| ------------- | ------- | ---------------------------------------------------------------------- |
-| `todo`        | Yes     | Removed immediately.                                                   |
-| `in_progress` | No      | Error: cannot remove an in-progress item. Run `plumb done` or `plumb restore` first. |
-| `done`        | Yes     | Removed immediately. Baseline snapshot is cleaned up if present.        |
-=======
-| Item state    | Allowed | Detail                                                                               |
-| ------------- | ------- | ------------------------------------------------------------------------------------ |
-| `todo`        | Yes     | Removed immediately.                                                                 |
-| `in_progress` | No      | Error: cannot remove an in-progress item. Run `plumb done` or `plumb restore` first. |
-| `done`        | Yes     | Removed immediately. Baseline snapshot is cleaned up if present.                     |
->>>>>>> f501775 (feat(items): add items.scb store + plumb add & plumb status)
+## Output
 
-Removing an `in_progress` item is not allowed because it would leave the
-session in an ambiguous state (baseline captured but no item referencing it).
-Complete or restore the item first.
-
-## Examples
-
-Remove an item by ID:
-
-```bash
-plumb rm 2
-# Removed: [2] src/auth/session.rs
+```text
+ok[PLB-OUT-ITM-005]: item removed from queue
 ```
 
-Remove an item by file path:
+Verbose includes `item_id` and `path`.
 
-```bash
-plumb rm src/auth/guard.rs
-# Removed: [1] src/auth/guard.rs
-```
+## Common Errors
 
-Attempt to remove an in-progress item:
-
-```bash
-plumb rm 1
-# error: cannot remove in-progress item [1] src/auth/guard.rs
-# Run 'plumb done' or 'plumb restore' first.
-```
-
-Attempt to remove a non-existent item:
-
-```bash
-plumb rm 99
-# error: no item with id 99
-```
-
-```bash
-plumb rm src/missing.rs
-# error: no item with path src/missing.rs
-```
-
-## Notes
-
-- Requires an active session. Fails if no session is active.
-- The argument is required. Running `plumb rm` with no argument prints usage
-  help.
-- File paths are resolved relative to the workspace root using the same
-  normalization as `plumb add` (so `cd test && plumb rm t3` correctly resolves
-  to `test/t3`).
-- IDs are stable. Removing an item does not renumber other items.
-- Removal is permanent within the session. There is no undo.
-
-## See also
-
-- [plumb add](./add.md) -- add items to the queue.
-- [plumb status](./status.md) -- see all items and their states.
-- [plumb done](./done.md) -- mark an in-progress item as done instead of removing it.
-- [plumb restore](./restore.md) -- revert a file to baseline instead of removing it.
-- [Items](../concepts/items.md) -- item fields and ID assignment.
+- no active session: `PLB-SES-001`
+- target not in queue: `PLB-ITM-001`
+- target is in progress: `PLB-ITM-004`

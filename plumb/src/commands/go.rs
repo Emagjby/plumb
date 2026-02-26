@@ -5,6 +5,7 @@ use thiserror::Error;
 use crate::{
     fs::{FsError, atomic_write},
     helpers::{HelperError, resolve_item},
+    output::OutputMessage,
     store::items::{Item, State, StoreError, active_session_id, load_items, save_items},
     workspace::resolve_workspace_root,
 };
@@ -208,7 +209,14 @@ fn mark_item_in_progress(root: &Path, session_id: &str, item_id: usize) -> Resul
     item.state = State::InProgress;
     save_items(root, session_id, &items)?;
 
-    println!("Started: [{}] {} (baseline captured)", item_id, rel_path);
+    print!(
+        "{}",
+        OutputMessage::ok("PLB-OUT-SNP-001", "baseline captured and item started")
+            .with_command("plumb go")
+            .with_context("session_id", session_id)
+            .with_context("item_id", item_id.to_string())
+            .with_context("path", rel_path)
+    );
 
     Ok(())
 }

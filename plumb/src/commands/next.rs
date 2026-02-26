@@ -3,6 +3,7 @@ use std::path::Path;
 use thiserror::Error;
 
 use crate::{
+    output::OutputMessage,
     store::items::{Item, State, active_session_id, load_items},
     workspace::{WorkspaceError, resolve_workspace_root},
 };
@@ -45,7 +46,16 @@ fn print_next_item(root: &Path) -> Result<(), NextError> {
         NextError::NoTodoInQueue("no 'To Do' items found in the queue".to_string())
     })?;
 
-    println!("Next item: {} (ID: {})", next_item.rel_path, next_item.id);
+    print!(
+        "{}",
+        OutputMessage::info(
+            "PLB-OUT-ITM-007",
+            format!("Next item: {} (ID: {})", next_item.rel_path, next_item.id)
+        )
+        .with_command("plumb next")
+        .with_context("path", next_item.rel_path.clone())
+        .with_context("item_id", next_item.id.to_string())
+    );
 
     Ok(())
 }
