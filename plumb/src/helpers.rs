@@ -24,9 +24,15 @@ pub fn resolve_item(
 ) -> Result<(usize, String, State), HelperError> {
     if target.chars().all(|c| c.is_ascii_digit())
         && let Ok(id) = target.parse::<usize>()
-        && let Some(item) = items.iter().find(|item| item.id == id)
     {
-        return Ok((item.id, item.rel_path.clone(), item.state.clone()));
+        if let Some(item) = items.iter().find(|item| item.id == id) {
+            return Ok((item.id, item.rel_path.clone(), item.state.clone()));
+        }
+
+        return Err(HelperError::FileNotInQueue(format!(
+            "no file with ID {} in queue",
+            id
+        )));
     }
 
     let normalized_path = normalize_rel_path(root, Path::new(target))
@@ -98,5 +104,14 @@ mod tests {
         assert!(
             matches!(err, HelperError::PathNormalizationError(msg) if msg.contains("outside.rs"))
         );
+    }
+
+    #[test]
+    fn resolve_item_numeric_unknown_target_returns_file_not_in_queue() {
+        let root = TempDir::new().unwrap();
+        let items = vec![make_item(1, "src/a.rs", State::Todo)];
+
+        let err = resolve_item(root.path(), &items, "99").unwrap_err();
+        assert!(matches!(err, HelperError::FileNotInQueue(msg) if msg.contains("99")));
     }
 }

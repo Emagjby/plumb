@@ -4,8 +4,8 @@ use thiserror::Error;
 
 use crate::{
     diff::render_baseline_diff,
-    helpers::{resolve_item, HelperError},
-    store::items::{active_session_id, load_items, Item, State, StoreError},
+    helpers::{HelperError, resolve_item},
+    store::items::{Item, State, StoreError, active_session_id, load_items},
     workspace::resolve_workspace_root,
 };
 

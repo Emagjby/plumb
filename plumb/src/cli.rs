@@ -2,8 +2,8 @@ use clap::{Parser, Subcommand};
 
 use crate::{
     commands::{
-        add::plumb_add, diff::plumb_diff, go::plumb_go, rm::plumb_rm, start::plumb_start,
-        status::plumb_status,
+        add::plumb_add, diff::plumb_diff, done::plumb_done, go::plumb_go, next::plumb_next,
+        rm::plumb_rm, start::plumb_start, status::plumb_status,
     },
     error::PlumbError,
 };
@@ -74,6 +74,16 @@ pub enum Commands {
         #[arg(verbatim_doc_comment)]
         target: Option<String>,
     },
+
+    /// Marks an "In Progress" item as "Done".
+    Done {
+        /// File path or item ID of the file to mark as done.
+        /// Example: "src/auth/guards.rs"
+        target: String,
+    },
+
+    /// Prints the next "To Do" item in the queue, if any.
+    Next {},
 }
 
 pub fn run() -> Result<(), PlumbError> {
@@ -86,6 +96,8 @@ pub fn run() -> Result<(), PlumbError> {
         Commands::Rm { target } => plumb_rm(target)?,
         Commands::Go { target } => plumb_go(target)?,
         Commands::Diff { target } => plumb_diff(target)?,
+        Commands::Done { target } => plumb_done(target)?,
+        Commands::Next {} => plumb_next()?,
     }
 
     Ok(())
