@@ -1,6 +1,6 @@
 # plumb next
 
-Print the next todo item.
+Print the next `todo` item.
 
 ## Synopsis
 
@@ -8,57 +8,20 @@ Print the next todo item.
 plumb next
 ```
 
-## Description
+## Behavior
 
-Prints the next `todo` item in the queue -- the one with the **lowest ID** among
-all items still in `todo` state. This command is read-only; it does not change
-any state.
+- finds the first `todo` item in stored list order
+- does not mutate state
 
-Use `plumb next` to see what is coming up without committing to it. When you are
-ready to start, use `plumb go` with the printed ID or path.
+Success output summary is:
 
-## Arguments
-
-None.
-
-## Options
-
-None.
-
-## Output
-
-If there is a `todo` item:
-
-```
-Next: [3] src/middleware/cors.rs
+```text
+info[PLB-OUT-ITM-007]: Next item: <path> (ID: <id>)
 ```
 
-If all items are `done` or `in_progress` (no `todo` items remain):
+If no `todo` item exists, command fails (non-zero) with diagnostic `PLB-ITM-005`.
 
-```
-No todo items remaining.
-```
+## Common Errors
 
-## Examples
-
-```bash
-plumb next
-# Next: [3] src/middleware/cors.rs
-```
-
-```bash
-plumb next
-# No todo items remaining.
-```
-
-## Notes
-
-- **Read-only.** Does not change item state. The item stays `todo`.
-- The "next" item is always the one with the lowest ID in `todo` state.
-- Requires an active session.
-
-## See also
-
-- [plumb go](./go.md) -- start working on the next item.
-- [plumb status](./status.md) -- see the full session summary.
-- [States](../concepts/states.md)
+- no active session: `PLB-SES-001`
+- no `todo` items in queue: `PLB-ITM-005`

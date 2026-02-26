@@ -4,7 +4,7 @@ fn main() {
     let exit_code = match run() {
         Ok(()) => 0,
         Err(e) => {
-            eprintln!("{}", e);
+            eprint!("{e}");
             1
         }
     };

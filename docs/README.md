@@ -1,34 +1,42 @@
 # Plumb Docs
 
-This folder contains the specification and user manual for **Plumb** v0.1.
+Documentation for the current `plumb` implementation.
 
-## Start here
+## Start Here
 
-- [Manual](./MANUAL.md) -- full reference for every command and concept.
+- [Manual](./MANUAL.md) - complete behavior and command reference
+- [Typical flow](./examples/typical-flow.md) - end-to-end walkthrough
 
-## Quick example
+## Command Reference
 
-- [Typical flow](./examples/typical-flow.md) -- a start-to-finish refactor session walkthrough.
+- [start](./commands/start.md)
+- [add](./commands/add.md)
+- [rm](./commands/rm.md)
+- [status](./commands/status.md)
+- [go](./commands/go.md)
+- [diff](./commands/diff.md)
+- [done](./commands/done.md)
+- [next](./commands/next.md)
+- [restore](./commands/restore.md)
+- [finish](./commands/finish.md)
 
-## Core concepts
+## Concepts
 
-- [Sessions](./concepts/sessions.md) -- short-lived work containers.
-- [Items](./concepts/items.md) -- files tracked inside a session.
-- [States](./concepts/states.md) -- the three states an item moves through.
-- [Snapshots](./concepts/snapshots.md) -- go-time baselines and diffing.
-- [Workspace](./concepts/workspace.md) -- `.plumb/` storage layout and Strata SCB files.
+- [workspace](./concepts/workspace.md)
+- [sessions](./concepts/sessions.md)
+- [items](./concepts/items.md)
+- [states](./concepts/states.md)
+- [snapshots](./concepts/snapshots.md)
 
-## Command reference
+## Output and Errors
 
-| Command        | Page                           |
-| -------------- | ------------------------------ |
-| `plumb start`  | [start](./commands/start.md)   |
-| `plumb add`    | [add](./commands/add.md)       |
-| `plumb rm`     | [rm](./commands/rm.md)         |
-| `plumb status` | [status](./commands/status.md) |
-| `plumb go`     | [go](./commands/go.md)         |
-| `plumb diff`   | [diff](./commands/diff.md)     |
-| `plumb done`    | [done](./commands/done.md)       |
-| `plumb restore` | [restore](./commands/restore.md) |
-| `plumb next`    | [next](./commands/next.md)       |
-| `plumb finish` | [finish](./commands/finish.md) |
+- Fatal diagnostics are emitted as `error[PLB-...]`.
+- Non-fatal command messages are emitted as `ok/info/warn/prompt[PLB-OUT-...]`.
+- Command-specific examples are documented in each page under `docs/commands/`.
+
+## Verbosity
+
+All commands support global `-v` / `--verbose`.
+
+- default: collapsed one-line records
+- verbose: expanded command/context fields

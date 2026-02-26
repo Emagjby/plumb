@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 use crate::{
+    output::OutputMessage,
     store::items::{Item, State, StoreError, active_session_id, load_items},
     workspace::resolve_workspace_root,
 };
@@ -34,10 +35,14 @@ pub fn plumb_status() -> Result<(), StatusError> {
 }
 
 fn print_status(items: &[Item], session_id: &str) {
-    println!("Session [{}] Status:", session_id);
+    print!(
+        "{}",
+        OutputMessage::info("PLB-OUT-SES-002", "session status")
+            .with_command("plumb status")
+            .with_context("session_id", session_id)
+    );
     print_compact(items);
-
-    println!("\nQueue:");
+    println!("\nqueue:");
     print_queue(items);
 }
 
@@ -61,6 +66,19 @@ fn print_compact(items: &[Item]) {
 
 fn print_queue(item: &[Item]) {
     for item in item {
-        println!("  [{:?}] {:?} - {:?}", item.id, item.rel_path, item.state);
+        println!(
+            "  [{}] {} - {}",
+            item.id,
+            item.rel_path,
+            state_label(&item.state)
+        );
+    }
+}
+
+fn state_label(state: &State) -> &'static str {
+    match state {
+        State::Todo => "todo",
+        State::InProgress => "in_progress",
+        State::Done => "done",
     }
 }

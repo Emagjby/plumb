@@ -1,49 +1,32 @@
 # Sessions
 
-A **session** is a short-lived work container for a single refactoring effort.
-You start one, enqueue the files you plan to touch, work through them one at a
-time, and close the session when you are finished.
+A session is the container for one refactor run.
 
 ## Lifecycle
 
-1. **Created** -- `plumb start` creates a session and marks it active.
-2. **Active** -- You add items, pick them off, refactor, and mark them done.
-3. **Finished** -- `plumb finish` closes the session and clears the active pointer.
+1. `start` creates a new session and marks it active.
+2. commands operate against the active session.
+3. `finish` marks session finished and removes active pointer.
 
-## Active session rule
+## Active Session Pointer
 
-There is **exactly one active session at a time**. Every command that operates
-on a session (`add`, `go`, `status`, etc.) targets the active session
-implicitly. If no session is active the command fails with an error.
+Active session is tracked by `.plumb/active`.
 
-Starting a new session while another is active is an error. You must `finish`
-the current session first.
+- when active: file exists and contains session id
+- when no active session: file is absent (or treated as inactive if invalid/empty)
 
-## Session identity
+`start` refuses when `.plumb/active` already contains a valid session id.
 
-Each session receives a unique identifier (generated at creation time). The
-active session ID is recorded in `.plumb/active` so that Plumb can find it on
-subsequent invocations.
+## Session Metadata
 
-## Optional session name
+`session.scb` stores:
 
-`plumb start` accepts an optional human-readable name (e.g.
-`"refactor auth guards"`). The name is stored in the session's metadata but is
-not used as an identifier.
+- `session_id` (bytes)
+- `name` (string, optional/empty)
+- `created_at` (16-byte little-endian i128 nanoseconds)
+- `status = "finished"` is added on `finish`
 
-## Storage
+## Related Commands
 
-Session metadata is persisted in a Strata SCB file at:
-
-```
-.plumb/sessions/<session_id>/session.scb
-```
-
-See [Workspace](./workspace.md) for the full layout.
-
-## See also
-
-- [Items](./items.md) -- the files tracked inside a session.
-- [States](./states.md) -- how items move through the session.
-- [plumb start](../commands/start.md)
-- [plumb finish](../commands/finish.md)
+- [../commands/start.md](../commands/start.md)
+- [../commands/finish.md](../commands/finish.md)

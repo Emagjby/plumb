@@ -1,8 +1,11 @@
 pub mod cli;
 pub mod commands;
+pub mod diagnostic;
 pub mod diff;
 pub mod error;
 pub mod fs;
 pub mod helpers;
+pub mod output;
 pub mod store;
+pub mod verbosity;
 pub mod workspace;

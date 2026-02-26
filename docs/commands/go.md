@@ -1,83 +1,52 @@
 # plumb go
 
-Start working on an item. Captures the baseline snapshot and opens the file in vim.
+Start or reopen work on a queued item.
 
 ## Synopsis
 
 ```bash
-plumb go <id|file>
+plumb go <target>
 ```
 
-## Description
+## Behavior by Item State
 
-Sets the specified `todo` item to `in_progress`, captures a **baseline
-snapshot** of the file's current contents, and **opens the file in vim** for
-editing. The baseline is a frozen copy of the file at this exact moment -- the
-"before" image for `plumb diff`.
+### `todo`
 
-This is the critical transition in the Plumb workflow. After `plumb go`, you are
-dropped straight into vim with the file open. Every change you make is visible
-via `plumb diff` when you exit.
+1. verifies source exists, is a file, and is readable
+2. captures baseline to `.plumb/sessions/<session_id>/snapshots/<item_id>.baseline`
+3. marks item `in_progress`
+4. opens editor
 
-## Arguments
+Success output (from state transition step):
 
-| Argument       | Required | Description                                                                                     |
-| -------------- | -------- | ----------------------------------------------------------------------------------------------- |
-| `id` or `file` | Yes      | The item to start. Accepts either the integer ID or the file path (relative to workspace root). |
-
-## Options
-
-None.
-
-## Baseline capture
-
-When `plumb go` runs, it:
-
-1. Reads the file's current bytes from disk.
-2. Writes those bytes to `.plumb/sessions/<session_id>/snapshots/<item_id>.baseline`.
-3. Transitions the item's state from `todo` to `in_progress`.
-4. Opens the file in `vim`.
-
-The baseline is **raw file bytes** -- the exact byte sequence on disk, with no
-encoding or transformation.
-
-An optional metadata sidecar (`<item_id>.meta.scb`, Strata SCB binary) may also
-be written with capture metadata such as a timestamp.
-
-## Examples
-
-Start working on item 1:
-
-```bash
-plumb go 1
-# Started: [1] src/auth/guard.rs (baseline captured)
-# opens src/auth/guard.rs in vim
+```text
+ok[PLB-OUT-SNP-001]: baseline captured and item started
 ```
 
-Start working on an item by path:
+### `in_progress`
 
-```bash
-plumb go src/auth/guard.rs
-# Started: [1] src/auth/guard.rs (baseline captured)
-# opens src/auth/guard.rs in vim
-```
+- reopens editor only
+- no baseline recapture
+- no state change
+- no structured success message
 
-## Notes
+### `done`
 
-- **File must exist.** If the file does not exist on disk, `plumb go` fails and
-  the item stays `todo`.
-- **File must be readable.** If the file cannot be read (e.g. permission denied),
-  `plumb go` fails and the item stays `todo`.
-- **Item must be `todo`.** Running `plumb go` on a `done` item is an error.
-- **Opens editor (defaults to vim).** After capturing the baseline, Plumb opens the
-  file in your editor. If none is set, it defaults to `vim`
-  Plumb waits for vim to exit before returning control to the terminal.
-- Requires an active session.
+- fails (`PLB-ITM-002`)
 
-## See also
+## Editor
 
-- [plumb diff](./diff.md) -- see what changed since the baseline.
-- [plumb restore](./restore.md) -- revert the file to the baseline.
-- [plumb done](./done.md) -- mark the item as done.
-- [Snapshots](../concepts/snapshots.md) -- how baselines work.
-- [States](../concepts/states.md) -- the `todo` -> `in_progress` transition.
+- uses `EDITOR` env var when set/non-empty
+- otherwise defaults to `vim`
+
+## Important Note
+
+If baseline capture and state update succeed but editor launch fails, the item remains `in_progress` with baseline already captured.
+
+## Common Errors
+
+- no active session: `PLB-SES-001`
+- target not found: `PLB-ITM-001`
+- already done: `PLB-ITM-002`
+- source missing/dir/unreadable: `PLB-SNP-003/004/005`
+- editor launch/exit failure: `PLB-EDT-001/002`

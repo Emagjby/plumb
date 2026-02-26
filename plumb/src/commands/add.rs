@@ -7,6 +7,7 @@ use crate::{
         InputError, collect_folder_files, lexical_normalize, normalize_rel_path_from_cwd,
         to_slash_path,
     },
+    output::OutputMessage,
     store::items::{Item, State, StoreError, active_session_id, load_items, save_items},
     workspace::resolve_workspace_root,
 };
@@ -71,7 +72,13 @@ where
 
     plumb_add_file(&mut items, &normalized_path)?;
     save_items_fn(&root, &session_id, &items).map_err(AddError::StoreError)?;
-    println!("Added file: [{}] {}", session_id, normalized_path);
+    print!(
+        "{}",
+        OutputMessage::ok("PLB-OUT-ITM-001", "item added to queue")
+            .with_command("plumb add")
+            .with_context("session_id", session_id)
+            .with_context("path", normalized_path)
+    );
 
     Ok(())
 }
@@ -87,21 +94,40 @@ fn plumb_add_folder(
     let files =
         collect_folder_files(&folder_path).map_err(|e| AddError::UnknownError(e.to_string()))?;
 
-    println!("Added folder: [{}] {}", session_id, normalized_path);
-    println!();
-    println!("Files found: {}", files.len());
-
     let mut added_count = 0usize;
+    let files_found = files.len();
     for file in files {
         let file_rel_path = normalize_rel_path_from_cwd(root, &file, root)?;
         match plumb_add_file(items, &file_rel_path) {
             Ok(()) => added_count += 1,
             Err(AddError::FileAlreadyInQueue(_)) => {
-                println!("  [SKIP] file already in queue: {}", file_rel_path)
+                print!(
+                    "{}",
+                    OutputMessage::warn("PLB-OUT-ITM-003", "item already in queue")
+                        .with_command("plumb add -f")
+                        .with_context("path", file_rel_path)
+                        .with_action("skipped")
+                )
             }
-            Err(e) => println!("  [ERROR] failed to add file: {}: {}", file_rel_path, e),
+            Err(e) => print!(
+                "{}",
+                OutputMessage::warn("PLB-OUT-ITM-004", "failed to add file during folder scan")
+                    .with_command("plumb add -f")
+                    .with_context("path", file_rel_path)
+                    .with_note(e.to_string())
+                    .with_action("skipped")
+            ),
         }
     }
+    print!(
+        "{}",
+        OutputMessage::ok("PLB-OUT-ITM-002", "folder scan completed")
+            .with_command("plumb add -f")
+            .with_context("session_id", session_id)
+            .with_context("path", normalized_path)
+            .with_context("files_found", files_found.to_string())
+            .with_context("items_added", added_count.to_string())
+    );
 
     Ok(added_count)
 }

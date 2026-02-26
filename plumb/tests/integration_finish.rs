@@ -84,11 +84,10 @@ fn finish_happy_path_clears_active_and_sets_session_finished() {
     );
 
     let active_path = root.join(".plumb").join("active");
-    let active_cleared = !active_path.exists()
-        || fs::read_to_string(&active_path)
-            .map(|s| s.trim().is_empty())
-            .unwrap_or(false);
-    assert!(active_cleared, "active session pointer should be cleared");
+    assert!(
+        !active_path.exists(),
+        "active session pointer file should be removed"
+    );
 
     let status = read_session_status(root, &session_id);
     assert_eq!(status, "finished");
@@ -149,5 +148,5 @@ fn structural_atomic_write_usage_for_core_state_files() {
 
     let session_src = fs::read_to_string(root.join("src/store/session.rs")).unwrap();
     assert!(session_src.contains("atomic_write(&session_file"));
-    assert!(session_src.contains("atomic_write(&active_path"));
+    assert!(session_src.contains("remove_file(&active_path"));
 }
