@@ -1,8 +1,10 @@
 pub mod add;
 pub mod diff;
 pub mod done;
+pub mod finish;
 pub mod go;
 pub mod next;
+pub mod restore;
 pub mod rm;
 pub mod start;
 pub mod status;

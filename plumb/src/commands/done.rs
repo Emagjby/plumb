@@ -30,7 +30,7 @@ pub fn plumb_done(target: String) -> Result<(), DoneError> {
 }
 
 fn plumb_done_from_cwd(cwd: &Path, target: String) -> Result<(), DoneError> {
-    let root = resolve_workspace_root(&cwd)?;
+    let root = resolve_workspace_root(cwd)?;
 
     let session_id = active_session_id(&root).map_err(|_| {
         DoneError::NoActiveSession(

@@ -2,8 +2,9 @@ use clap::{Parser, Subcommand};
 
 use crate::{
     commands::{
-        add::plumb_add, diff::plumb_diff, done::plumb_done, go::plumb_go, next::plumb_next,
-        rm::plumb_rm, start::plumb_start, status::plumb_status,
+        add::plumb_add, diff::plumb_diff, done::plumb_done, finish::plumb_finish, go::plumb_go,
+        next::plumb_next, restore::plumb_restore, rm::plumb_rm, start::plumb_start,
+        status::plumb_status,
     },
     error::PlumbError,
 };
@@ -84,6 +85,16 @@ pub enum Commands {
 
     /// Prints the next "To Do" item in the queue, if any.
     Next {},
+
+    /// Restores the file to the baseline version.
+    Restore {
+        /// File path or item ID of the file to restore.
+        /// Example: "src/auth/guards.rs"
+        target: String,
+    },
+
+    /// Closes the current session.
+    Finish {},
 }
 
 pub fn run() -> Result<(), PlumbError> {
@@ -98,6 +109,8 @@ pub fn run() -> Result<(), PlumbError> {
         Commands::Diff { target } => plumb_diff(target)?,
         Commands::Done { target } => plumb_done(target)?,
         Commands::Next {} => plumb_next()?,
+        Commands::Restore { target } => plumb_restore(target)?,
+        Commands::Finish {} => plumb_finish()?,
     }
 
     Ok(())

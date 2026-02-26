@@ -14,7 +14,29 @@ pub enum HelperError {
     #[error("{0}")]
     FileNotInQueue(String),
     #[error("{0}")]
+    BaselineReadError(String),
+    #[error("{0}")]
     UnknownError(String),
+}
+
+pub fn load_baseline(root: &Path, session_id: &str, target: usize) -> Result<Vec<u8>, HelperError> {
+    let snapshots_path = root
+        .join(".plumb")
+        .join("sessions")
+        .join(session_id)
+        .join("snapshots");
+
+    let baseline_path = snapshots_path.join(format!("{}.baseline", target));
+    std::fs::read(&baseline_path).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::NotFound {
+            HelperError::BaselineReadError(
+                "baseline snapshot not found on disk (this should not happen in normal use)"
+                    .to_string(),
+            )
+        } else {
+            HelperError::BaselineReadError(format!("failed to read baseline snapshot: {e}"))
+        }
+    })
 }
 
 pub fn resolve_item(
@@ -51,6 +73,7 @@ pub fn resolve_item(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use tempfile::TempDir;
 
     fn make_item(id: usize, rel_path: &str, state: State) -> Item {
@@ -113,5 +136,33 @@ mod tests {
 
         let err = resolve_item(root.path(), &items, "99").unwrap_err();
         assert!(matches!(err, HelperError::FileNotInQueue(msg) if msg.contains("99")));
+    }
+
+    #[test]
+    fn load_baseline_reads_exact_bytes() {
+        let root = TempDir::new().unwrap();
+        let snapshots = root
+            .path()
+            .join(".plumb")
+            .join("sessions")
+            .join("deadbeef")
+            .join("snapshots");
+        fs::create_dir_all(&snapshots).unwrap();
+
+        let expected = vec![0_u8, 159, 255, 10, b'a', b'\n'];
+        fs::write(snapshots.join("7.baseline"), &expected).unwrap();
+
+        let baseline = load_baseline(root.path(), "deadbeef", 7).unwrap();
+        assert_eq!(baseline, expected);
+    }
+
+    #[test]
+    fn load_baseline_missing_returns_not_found_error() {
+        let root = TempDir::new().unwrap();
+
+        let err = load_baseline(root.path(), "deadbeef", 7).unwrap_err();
+        assert!(
+            matches!(err, HelperError::BaselineReadError(msg) if msg.contains("baseline snapshot not found"))
+        );
     }
 }
